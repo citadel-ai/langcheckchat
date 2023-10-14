@@ -1,0 +1,25 @@
+let currentPage = 1;
+
+function loadLogs(direction) {
+    if (direction === 'next') {
+        currentPage += 1;
+    } else if (direction === 'prev' && currentPage > 1) {
+        currentPage -= 1;
+    }
+    $('#logTable tr:not(:first)').remove();  // Remove all rows except headers
+    $.get('/api/logs?page=' + currentPage, function(data) {
+        data.logs.forEach(log => {
+            $('#logTable').append(
+                '<tr><td>' + log.request + '</td><td>' + log.response + '</td><td>' + log.timestamp + '</td></tr>'
+            );
+        });
+        $('#currentPage').text(currentPage);
+    }, 'json');
+}
+
+$(document).ready(function() {
+    loadLogs(); // Load initial logs on page load
+    $('.pagination button').click(function() {
+        loadLogs($(this).text().toLowerCase());
+    });
+});
