@@ -2,23 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Chat Log</title>
-    <!-- Add your CSS links here -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Logs</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <table id="logTable">
-        <tr>
-            <th>Request</th>
-            <th>Response</th>
-            <th>Timestamp</th>
-        </tr>
-        <!-- Rows will be added dynamically -->
-    </table>
+    <div class="container mt-3">
+        <h1 class="mt-3 mb-3 text-center">Chat Logs</h1>
 
-    <button onclick="loadMoreLogs()">Load More</button>
+        <table id="logTable" class="table">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">User Message</th>
+                    <th scope="col">Bot Message</th>
+                    <th scope="col">Timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="logTableBody">
+                <!-- Rows inserted by JavaScript -->
+            </tbody>
+        </table>
 
-    <!-- Add your JS links here -->
+        <div class="pagination-container mt-3 mb-3">
+            <button id="prevButton" class="btn btn-primary">Previous</button>
+            <span id="pageIndicator" class="mx-3"></span>
+            <button id="nextButton" class="btn btn-primary">Next</button>
+        </div>
+
+        <div class="mt-3">
+            <a href="index.html">Back to Chat</a>
+        </div>
+    </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="static/logs.js"></script>
+    <script src="logs.js"></script>
 </body>
 </html>

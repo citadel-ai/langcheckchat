@@ -8,6 +8,7 @@ function loadLogs(direction) {
     }
     $('#logTable tr:not(:first)').remove();  // Remove all rows except headers
     $.get('/api/logs?page=' + currentPage, function(data) {
+        console.log(data);
         data.logs.forEach(log => {
             $('#logTable').append(
                 '<tr><td>' + log.request + '</td><td>' + log.response + '</td><td>' + log.timestamp + '</td></tr>'
@@ -19,7 +20,6 @@ function loadLogs(direction) {
 
 $(document).ready(function() {
     loadLogs(); // Load initial logs on page load
-    $('.pagination button').click(function() {
-        loadLogs($(this).text().toLowerCase());
-    });
+    $('#prevButton').click(function() { loadLogs('prev'); });
+    $('#nextButton').click(function() { loadLogs('next'); });
 });
