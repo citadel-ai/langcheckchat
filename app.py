@@ -7,16 +7,18 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-from llama_index import GPTVectorStoreIndex, download_loader
+from llama_index import GPTVectorStoreIndex, SimpleWebPageReader
+from langcheck.metrics import factual_consistency
+
+# initalize factual consistency
+print(factual_consistency("I'm Bob", "I'm Bob"))
 
 SAVED_DOCUMENTS = 'docs.pkl'
 if os.path.exists(SAVED_DOCUMENTS):
     with open(SAVED_DOCUMENTS, 'rb') as f:
         documents = pickle.load(f)
 else:
-    SimpleWebPageReader = download_loader("SimpleWebPageReader")
-
-    loader = SimpleWebPageReader()
+    loader = SimpleWebPageReader(html_to_text=True)
     pages = [
         "https://langcheck.readthedocs.io/en/latest/langcheck.html",
         "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.reference_based_text_quality.html",
@@ -72,7 +74,12 @@ def log_page():
 def chat():
     user_message = request.get_json().get('message', '')
     # Generate response message
-    response_message = str(index.as_query_engine().query(user_message))
+    response = index.as_query_engine().query(user_message)
+    response_message = str(response)
+    sources = [node.node.text for node in response.source_nodes]
+    score = factual_consistency(response_message,
+                                ''.join(sources)).metric_values[0]
+
     timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 
     con = connect_db()
@@ -82,7 +89,12 @@ def chat():
     con.commit()
     con.close()
 
-    return jsonify(response=response_message)
+    warning = score < 0.5
+
+    return jsonify(response=response_message,
+                   score=score,
+                   warning=warning,
+                   sources=sources)
 
 
 @app.route('/api/logs', methods=['GET'])
