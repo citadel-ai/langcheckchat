@@ -1,41 +1,51 @@
 from flask import Flask, request, jsonify
 from datetime import datetime
 import sqlite3
+import pickle
+import os
 
 from dotenv import load_dotenv
 
 load_dotenv()
 from llama_index import GPTVectorStoreIndex, download_loader
 
-SimpleWebPageReader = download_loader("SimpleWebPageReader")
+SAVED_DOCUMENTS = 'docs.pkl'
+if os.path.exists(SAVED_DOCUMENTS):
+    with open(SAVED_DOCUMENTS, 'rb') as f:
+        documents = pickle.load(f)
+else:
+    SimpleWebPageReader = download_loader("SimpleWebPageReader")
 
-loader = SimpleWebPageReader()
-pages = [
-    "https://langcheck.readthedocs.io/en/latest/langcheck.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.reference_based_text_quality.html",
-    "https://langcheck.readthedocs.io/en/latest/installation.html",
-    "https://langcheck.readthedocs.io/en/latest/metrics.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.utils.io.html",
-    "https://langcheck.readthedocs.io/en/latest/index.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.ja.reference_free_text_quality.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.ja.html",
-    "https://langcheck.readthedocs.io/en/latest/py-modindex.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.metric_value.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.text_structure.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.plot.html",
-    "https://langcheck.readthedocs.io/en/latest/genindex.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.source_based_text_quality.html",
-    "https://langcheck.readthedocs.io/en/latest/contributing.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.reference_based_text_quality.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.ja.reference_based_text_quality.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.utils.html",
-    "https://langcheck.readthedocs.io/en/latest/https://www.sbert.net/docs/usage/semantic_textual_similarity.html",
-    "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.reference_free_text_quality.html",
-    "https://langcheck.readthedocs.io/en/latest/quickstart.html",
-]
-documents = loader.load_data(urls=pages)
+    loader = SimpleWebPageReader()
+    pages = [
+        "https://langcheck.readthedocs.io/en/latest/langcheck.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.reference_based_text_quality.html",
+        "https://langcheck.readthedocs.io/en/latest/installation.html",
+        "https://langcheck.readthedocs.io/en/latest/metrics.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.utils.io.html",
+        "https://langcheck.readthedocs.io/en/latest/index.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.ja.reference_free_text_quality.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.ja.html",
+        "https://langcheck.readthedocs.io/en/latest/py-modindex.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.metric_value.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.text_structure.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.plot.html",
+        "https://langcheck.readthedocs.io/en/latest/genindex.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.source_based_text_quality.html",
+        "https://langcheck.readthedocs.io/en/latest/contributing.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.reference_based_text_quality.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.ja.reference_based_text_quality.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.utils.html",
+        "https://langcheck.readthedocs.io/en/latest/https://www.sbert.net/docs/usage/semantic_textual_similarity.html",
+        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.reference_free_text_quality.html",
+        "https://langcheck.readthedocs.io/en/latest/quickstart.html",
+    ]
+    documents = loader.load_data(urls=pages)
+    with open(SAVED_DOCUMENTS, 'wb') as f:
+        pickle.dump(documents, f)
+
 index = GPTVectorStoreIndex.from_documents(documents)
 
 
