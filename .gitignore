@@ -1,2 +1,3 @@
 db/langcheckchat.db
 __pycache__/
+.env

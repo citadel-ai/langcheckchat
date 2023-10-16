@@ -1,1 +1,6 @@
 Flask
+python-dotenv
+llama_index
+llama-cpp-python
+torch==2.0.1
+transformers[torch]

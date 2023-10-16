@@ -18,7 +18,7 @@ $(document).ready(function() {
 
 function generateChatRow(sender, message, iconSrc) {
     let chatRow = '<div class="chat-row ' + sender.toLowerCase() + '">' +
-                    '<img src="' + iconSrc + '" alt="' + sender + ' Icon" class="chat-icon">' +
+                    '<img src="/static/' + iconSrc + '" alt="' + sender + ' Icon" class="chat-icon">' +
                     '<div class="chat-message">' +
                         '<p>' + message + '</p>' +
                     '</div>' +
