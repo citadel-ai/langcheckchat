@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from datetime import datetime
 import sqlite3
+import subprocess
 import pickle
 import os
 
@@ -12,12 +13,13 @@ from llama_index import (GPTVectorStoreIndex, SimpleWebPageReader,
                          download_loader, ServiceContext,
                          set_global_service_context)
 
-from langcheck.metrics import factual_consistency
+import langcheck
 
 load_dotenv()
 
 # initalize factual consistency
-print(factual_consistency("I'm Bob", "I'm Bob"))
+print(langcheck.metrics.factual_consistency("I'm Bob", "I'm Bob"))
+print(langcheck.metrics.ja.factual_consistency("僕はボブ", "僕はボブ"))
 
 SAVED_DOCUMENTS = 'docs.pkl'
 if os.path.exists(SAVED_DOCUMENTS):
@@ -118,21 +120,33 @@ def chat():
     response_message = str(response)
     sources = [node.node.text for node in response.source_nodes]
     source = '\n'.join(sources)
-    score = factual_consistency(response_message, source).metric_values[0]
+
+    # TODO: Get from user inputs
+    language = 'en'
+
+    if language == 'ja':
+        factual_consistency_score = langcheck.metrics.ja.factual_consistency(
+            response_message, source).metric_values[0]
+    else:
+        factual_consistency_score = langcheck.metrics.factual_consistency(
+            response_message, source).metric_values[0]
 
     timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 
-    con = connect_db()
-    con.execute(
-        'INSERT INTO chat_log (request, response, timestamp) VALUES (?, ?, ?)',
-        (user_message, response_message, timestamp))
-    con.commit()
-    con.close()
+    with connect_db() as con:
+        cursor = con.cursor()
+        cursor.execute(
+            'INSERT INTO chat_log (request, response, source, language, factual_consistency, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
+            (user_message, response_message, source, language,
+             factual_consistency_score, timestamp))
+        log_id = cursor.lastrowid
+        con.commit()
 
-    warning = score < 0.5
+    subprocess.Popen(["python", "calculate_metrics.py", str(log_id)])
+    warning = factual_consistency_score < 0.5
 
     return jsonify(response=response_message,
-                   score=score,
+                   score=factual_consistency_score,
                    warning=warning,
                    source=source)
 
