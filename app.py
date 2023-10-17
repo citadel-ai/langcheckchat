@@ -107,8 +107,8 @@ def chat():
     response = index.as_query_engine().query(user_message)
     response_message = str(response)
     sources = [node.node.text for node in response.source_nodes]
-    score = factual_consistency(response_message,
-                                ''.join(sources)).metric_values[0]
+    source = '\n'.join(sources)
+    score = factual_consistency(response_message, source).metric_values[0]
 
     timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -124,7 +124,7 @@ def chat():
     return jsonify(response=response_message,
                    score=score,
                    warning=warning,
-                   sources=sources)
+                   source=source)
 
 
 @app.route('/api/logs', methods=['GET'])

@@ -65,3 +65,27 @@ thead.thead-dark {
     background-color: #343a40;
     color: #fff;
 }
+
+.qa-block {
+    margin-bottom: 30px;
+    padding: 15px;
+    border: 1px solid #e7e7e7;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+.user-question {
+    color: #007bff;
+}
+
+.bot-answer {
+    margin-top: 10px;
+}
+
+.source-text {
+    margin-top: 10px;
+}
+
+.hidden {
+    display: none;
+}
