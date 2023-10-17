@@ -80,10 +80,12 @@ thead.thead-dark {
 
 .bot-answer {
     margin-top: 10px;
+    white-space: pre-wrap;
 }
 
 .source-text {
     margin-top: 10px;
+    white-space: pre-wrap;
 }
 
 .hidden {
