@@ -3,6 +3,6 @@ python-dotenv
 llama_index
 llama-cpp-python
 torch==2.0.1
-transformers[torch]
+transformers[torch]==4.22.1
 langcheck
 html2text

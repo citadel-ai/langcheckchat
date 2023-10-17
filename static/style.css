@@ -91,3 +91,11 @@ thead.thead-dark {
 .hidden {
     display: none;
 }
+
+.spinner {
+    height: 15px;
+}
+
+#metricsTable tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}:where

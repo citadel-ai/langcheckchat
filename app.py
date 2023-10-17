@@ -115,14 +115,21 @@ def log_page():
 @app.route('/api/chat', methods=['POST'])
 def chat():
     user_message = request.get_json().get('message', '')
+    language = request.get_json().get('language', 'en')
+
     # Generate response message
-    response = index.as_query_engine().query(user_message)
+    if language == 'ja':
+        user_message_sent = '日本語で答えてください\n' + user_message
+    else:
+        user_message_sent = user_message
+    response = index.as_query_engine().query(user_message_sent)
     response_message = str(response)
     sources = [node.node.text for node in response.source_nodes]
     source = '\n'.join(sources)
 
     # TODO: Get from user inputs
-    language = 'en'
+    language = request.get_json().get('language', 'en')
+    print(language)
 
     if language == 'ja':
         factual_consistency_score = langcheck.metrics.ja.factual_consistency(
@@ -148,7 +155,8 @@ def chat():
     return jsonify(response=response_message,
                    score=factual_consistency_score,
                    warning=warning,
-                   source=source)
+                   source=source,
+                   id=log_id)
 
 
 @app.route('/api/logs', methods=['GET'])
@@ -171,6 +179,37 @@ def logs():
     con.close()
 
     return jsonify(logs=logs)
+
+
+@app.route('/api/metrics/<log_id>', methods=['GET'])
+def metrics_endpoint(log_id):
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+
+        # Fetch all column names
+        cursor.execute('PRAGMA table_info(chat_log)')
+        columns = [
+            col[1] for col in cursor.fetchall() if col[1] not in
+            ["id", "timestamp", "request", "response", "source", "completed"]
+        ]
+
+        # Fetch the latest metrics
+        cursor.execute(
+            "SELECT {} FROM chat_log WHERE id = ?".format(", ".join(columns)),
+            (log_id, ))
+        data = cursor.fetchone()
+
+        if data is None:
+            return jsonify({"error": "No logs available"}), 400
+
+        metrics_data = dict(zip(columns, data))
+
+        cursor.execute("SELECT completed FROM chat_log WHERE id = ?",
+                       (log_id, ))
+        completed = cursor.fetchone()[0]
+
+        metrics_data["completed"] = completed
+        return jsonify(metrics_data)
 
 
 if __name__ == '__main__':
