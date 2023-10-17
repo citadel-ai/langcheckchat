@@ -6,9 +6,14 @@ import os
 
 from dotenv import load_dotenv
 
-load_dotenv()
-from llama_index import GPTVectorStoreIndex, SimpleWebPageReader
+from llama_index.llms import AzureOpenAI
+from llama_index.embeddings import OpenAIEmbedding
+from llama_index import (GPTVectorStoreIndex, SimpleWebPageReader,
+                         ServiceContext, set_global_service_context)
+
 from langcheck.metrics import factual_consistency
+
+load_dotenv()
 
 # initalize factual consistency
 print(factual_consistency("I'm Bob", "I'm Bob"))
@@ -47,6 +52,31 @@ else:
     documents = loader.load_data(urls=pages)
     with open(SAVED_DOCUMENTS, 'wb') as f:
         pickle.dump(documents, f)
+
+llm = AzureOpenAI(
+    model=os.environ['AZURE_OPENAI_API_MODEL'],
+    engine=os.environ['AZURE_OPENAI_API_DEPLOYMENT'],
+    api_key=os.environ['AZURE_OPENAI_API_KEY'],
+    api_base=os.environ['AZURE_OPENAI_API_BASE'],
+    api_type='azure',
+    api_version='2023-05-15',
+)
+
+embed_model = OpenAIEmbedding(
+    model=os.environ['AZURE_OPENAI_API_EMBEDDING_MODEL'],
+    deployment_name=os.environ['AZURE_OPENAI_API_EMBEDDING_DEPLOYMENT'],
+    api_key=os.environ['AZURE_OPENAI_API_KEY'],
+    api_base=os.environ['AZURE_OPENAI_API_BASE'],
+    api_type='azure',
+    api_version='2023-05-15',
+)
+
+service_context = ServiceContext.from_defaults(
+    llm=llm,
+    embed_model=embed_model,
+)
+
+set_global_service_context(service_context)
 
 index = GPTVectorStoreIndex.from_documents(documents)
 
