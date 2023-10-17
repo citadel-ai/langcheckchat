@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 from llama_index.llms import AzureOpenAI
 from llama_index.embeddings import OpenAIEmbedding
 from llama_index import (GPTVectorStoreIndex, SimpleWebPageReader,
-                         ServiceContext, set_global_service_context)
+                         download_loader, ServiceContext,
+                         set_global_service_context)
 
 from langcheck.metrics import factual_consistency
 
@@ -50,6 +51,15 @@ else:
         "https://langcheck.readthedocs.io/en/latest/quickstart.html",
     ]
     documents = loader.load_data(urls=pages)
+
+    MarkdownReader = download_loader("MarkdownReader")
+    markdown_loader = MarkdownReader()
+    markdown_documents = []
+    for document in documents:
+        markdown_documents += markdown_loader.load_data(file=None,
+                                                        content=document.text)
+
+    documents += markdown_documents
     with open(SAVED_DOCUMENTS, 'wb') as f:
         pickle.dump(documents, f)
 
