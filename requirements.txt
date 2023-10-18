@@ -6,3 +6,4 @@ torch==2.0.1
 transformers[torch]==4.22.1
 langcheck
 html2text
+gunicorn
