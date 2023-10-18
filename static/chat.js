@@ -11,7 +11,6 @@ $(document).ready(function() {
 
     // Handle the toggle for source text
     $('#chatWindow').on('click', '.show-source-btn', function() {
-        console.log('Fired!!!');
         $(this).next('.source-text').toggleClass('hidden');
     });
 });

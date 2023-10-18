@@ -4,6 +4,7 @@ import sqlite3
 import subprocess
 import pickle
 import os
+import pytz
 
 from dotenv import load_dotenv
 
@@ -147,7 +148,8 @@ def chat():
         factual_consistency_score = langcheck.metrics.factual_consistency(
             response_message, source).metric_values[0]
 
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    timestamp = datetime.now(
+        pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S')
 
     with connect_db() as con:
         cursor = con.cursor()
@@ -171,13 +173,13 @@ def chat():
 @app.route('/api/logs', methods=['GET'])
 def logs():
     page = int(request.args.get('page', 1))
-    per_page = 5
+    per_page = 10
     offset = (page - 1) * per_page
 
     con = connect_db()
     cur = con.cursor()
     cur.execute(
-        'SELECT request, response, timestamp FROM chat_log LIMIT ? OFFSET ?',
+        'SELECT request, response, timestamp FROM chat_log ORDER BY timestamp DESC LIMIT ? OFFSET ?',
         (per_page, offset))
 
     logs = [{

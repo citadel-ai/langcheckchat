@@ -8,13 +8,12 @@ function loadLogs(direction) {
     }
     $('#logTable tr:not(:first)').remove();  // Remove all rows except headers
     $.get('/api/logs?page=' + currentPage, function(data) {
-        console.log(data);
         data.logs.forEach(log => {
             $('#logTable').append(
                 '<tr><td>' + log.request + '</td><td>' + log.response + '</td><td>' + log.timestamp + '</td></tr>'
             );
         });
-        $('#currentPage').text(currentPage);
+        $('#pageIndicator').text(currentPage);
     }, 'json');
 }
 
