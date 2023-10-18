@@ -30,6 +30,7 @@ function sendMessage() {
 
     // Append the user's question
     $('#chatWindow').append(generateQuestionRow(question));
+    $('#chatWindow').append('<div class="d-flex justify-content-center" id="spinner-container"><img src="static/spinner.gif" alt="Loading..."></div>');
 
     $('#metricsTable tbody').empty();
 
@@ -46,6 +47,7 @@ function sendMessage() {
                 clearInterval(metricsPollingInterval);
             }
             $('#metricsContainer').removeClass('hidden');
+            $('#spinner-container').remove();
             metricsPollingInterval = setInterval(updateMetrics.bind(null, data.id), 1000);
             $('#chatWindow').append(generateAnswerRow(data.response + '<br><br>Factual consistency score: ' + data.score, data.source, data.warning));
         }
