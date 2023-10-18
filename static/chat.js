@@ -62,9 +62,11 @@ function generateAnswerRow(answer, sourceText, warning) {
     if (warning) {
         warning_text = '<span style="color:red;">Warning: possible hallucination detected. </span><br>'
     }
-    return '<div class="bot-answer">' + warning_text + '<strong>A: </strong>' + answer + '</div>' +
-           '<button class="btn btn-sm btn-secondary show-source-btn">Show Source Text</button>' +
-           '<div class="source-text hidden">' + sourceText + '</div></div>';
+    return '<div class="qa-block">' +
+                '<div class="bot-answer">' + warning_text + '<strong>A: </strong>' + answer + '</div>' +
+                '<button class="btn btn-sm btn-secondary show-source-btn">Show Source Text</button>' +
+                '<div class="source-text hidden">' + sourceText + '</div></div>' +
+            '</div>';
 }
 
 function updateMetrics(id) {

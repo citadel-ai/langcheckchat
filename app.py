@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from llama_index.llms import AzureOpenAI
 from llama_index.embeddings import OpenAIEmbedding
 from llama_index import (GPTVectorStoreIndex, SimpleWebPageReader,
-                         download_loader, ServiceContext,
+                         StringIterableReader, download_loader, ServiceContext,
                          set_global_service_context)
 
 import langcheck
@@ -48,7 +48,6 @@ else:
         "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.reference_based_text_quality.html",
         "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.ja.reference_based_text_quality.html",
         "https://langcheck.readthedocs.io/en/latest/langcheck.utils.html",
-        "https://langcheck.readthedocs.io/en/latest/https://www.sbert.net/docs/usage/semantic_textual_similarity.html",
         "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.reference_free_text_quality.html",
         "https://langcheck.readthedocs.io/en/latest/quickstart.html",
     ]
@@ -56,12 +55,13 @@ else:
 
     MarkdownReader = download_loader("MarkdownReader")
     markdown_loader = MarkdownReader()
-    markdown_documents = []
+    markdown_strs = []
     for document in documents:
-        markdown_documents += markdown_loader.load_data(file=None,
-                                                        content=document.text)
+        markdown_docs = markdown_loader.load_data(file=None,
+                                                  content=document.text)
+        markdown_strs.append('\n'.join([mdoc.text for mdoc in markdown_docs]))
 
-    documents += markdown_documents
+    documents = StringIterableReader().load_data(markdown_strs)
     with open(SAVED_DOCUMENTS, 'wb') as f:
         pickle.dump(documents, f)
 
@@ -132,8 +132,17 @@ def chat():
     print(language)
 
     if language == 'ja':
-        factual_consistency_score = langcheck.metrics.ja.factual_consistency(
-            response_message, source).metric_values[0]
+        # TODO: Remove this once the problem is fixed in langcheck package
+        if len(source) < 512:
+            factual_consistency_score = langcheck.metrics.ja.factual_consistency(
+                response_message, source).metric_values[0]
+        else:
+            factual_consistency_score_fst = langcheck.metrics.ja.factual_consistency(
+                response_message, source[:len(source) // 2]).metric_values[0]
+            factual_consistency_score_snd = langcheck.metrics.ja.factual_consistency(
+                response_message, source[len(source) // 2:]).metric_values[0]
+            factual_consistency_score = max(factual_consistency_score_fst,
+                                            factual_consistency_score_snd)
     else:
         factual_consistency_score = langcheck.metrics.factual_consistency(
             response_message, source).metric_values[0]
