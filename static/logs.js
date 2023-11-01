@@ -6,10 +6,10 @@ function loadLogs(direction) {
     } else if (direction === 'prev' && currentPage > 1) {
         currentPage -= 1;
     }
-    $('#logTable tr:not(:first)').remove();  // Remove all rows except headers
+    $('#qa-table tr:not(:first)').remove();  // Remove all rows except headers
     $.get('/api/logs?page=' + currentPage, function(data) {
         data.logs.forEach(log => {
-            $('#logTable').append(
+            $('#qa-table').append(
                 '<tr><td>' + log.request + '</td><td>' + log.response + '</td><td>' + log.timestamp + '</td></tr>'
             );
         });
