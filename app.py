@@ -122,6 +122,7 @@ def chat():
     language = request.get_json().get('language', 'en')
 
     if request.path == '/api/chat_demo':
+        # Get canned responses to speed up live demos
         response_message, source, factual_consistency = rag_demo(user_message, language)
     else:
         response_message, source, factual_consistency = rag(user_message, language)
