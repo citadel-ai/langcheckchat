@@ -1,94 +1,124 @@
-$(document).ready(function() {
-    $('#sendButton').click(sendMessage);
+/*************************************************************************
+* Page setup
+*************************************************************************/
 
-    // Trigger sendButton click event when Enter key is pressed
-    $('#userInput').keypress(function(event) {
-        if (event.which == 13) { // 13 is the Enter key's code
-            event.preventDefault(); // Prevents default action (like form submission)
-            sendMessage();
-        }
-    });
-
-    // Handle the toggle for source text
-    $('#chatWindow').on('click', '.show-source-btn', function() {
-        $(this).next('.source-text').toggleClass('hidden');
-    });
-});
 let metricsPollingInterval;
 
+$('#send-button').click(sendMessage);
+
+// Trigger send-button click event when Enter key is pressed
+$('#user-input').keypress(function (event) {
+  if (event.which == 13) { // 13 is the Enter key's code
+    event.preventDefault(); // Prevents default action (like form submission)
+    sendMessage();
+  }
+});
+
+$('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
+
+/*************************************************************************
+* Event handlers
+*************************************************************************/
+
 function sendMessage() {
-    let question = $('#userInput').val();
-    $('#userInput').val('');
+  const language = $("#language-toggle").val();
+  const question = $('#user-input').val();
+  if (question.trim() === "") { return; }  // Don't send an empty message
 
-    if (question.trim() === "") return;  // Don't send an empty message
 
-    const language = $("#languageSelect").val();
+  // Show loading indicator
+  $('#metrics-and-sources-container').hide();
+  $('#chat-window').empty();
+  $('#chat-window').show();
+  $('#chat-window').append(`
+    <div id="spinner-container" class="text-center">
+      <div class="spinner-border text-success my-3" style="width: 5rem; height: 5rem;"></div>
+    </div>
+  `);
 
-    // Clear the previous Q&A
-    $('#chatWindow').empty();
+  // Clear metrics
+  $('#metrics-table tbody').empty();
+  $('#sources-table tbody pre').empty();
 
-    // Append the user's question
-    $('#chatWindow').append(generateQuestionRow(question));
-    $('#chatWindow').append('<div class="d-flex justify-content-center" id="spinner-container"><img src="static/spinner.gif" alt="Loading..."></div>');
+  $.post({
+    url: '/api/chat',
+    data: JSON.stringify({ message: question, language: language }),
+    contentType: 'application/json;charset=UTF-8',
+    dataType: 'json',
+  }).then(function (data) {
+    // Append the bot's answer
+    $('#metrics-and-sources-container').show();
+    $('#spinner-container').remove();
+    $('#chat-window').append(generateAnswerRow(data.response, data.score, data.warning));
+    $('#sources-table tbody pre').text(data.source);
+    $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
 
-    $('#metricsTable tbody').empty();
-
-    $.ajax({
-        type: 'POST',
-        url: '/api/chat',
-        data: JSON.stringify({ message: question, language: language }),
-        contentType: 'application/json;charset=UTF-8',
-        dataType: 'json',
-        success: function(data) {
-            // Append the bot's answer
-            // Poll metrics every second
-            if (metricsPollingInterval !== undefined) {
-                clearInterval(metricsPollingInterval);
-            }
-            $('#metricsContainer').removeClass('hidden');
-            $('#spinner-container').remove();
-            metricsPollingInterval = setInterval(updateMetrics.bind(null, data.id), 1000);
-            $('#chatWindow').append(generateAnswerRow(data.response + '<br><br>Factual consistency score: ' + data.score, data.source, data.warning));
-        }
-    });
-}
-
-function generateQuestionRow(question) {
-    return '<div class="qa-block">' +
-                '<div class="user-question"><strong>Q: </strong>' + question + '</div>';
-}
-
-function generateAnswerRow(answer, sourceText, warning) {
-    let warning_text = '';
-    if (warning) {
-        warning_text = '<span style="color:red;">Warning: possible hallucination detected. </span><br>'
+    // Poll metrics every second
+    if (metricsPollingInterval !== undefined) {
+      clearInterval(metricsPollingInterval);
     }
-    return '<div class="qa-block">' +
-                '<div class="bot-answer">' + warning_text + '<strong>A: </strong>' + answer + '</div>' +
-                '<button class="btn btn-sm btn-secondary show-source-btn">Show Source Text</button>' +
-                '<div class="source-text hidden">' + sourceText + '</div></div>' +
-            '</div>';
+    metricsPollingInterval = setInterval(updateMetrics.bind(null, data.id), 1000);
+    updateMetrics(data.id);  // So the table isn't empty for 1 second
+  });
+}
+
+function generateAnswerRow(answer, factualConsistencyScore, warning) {
+  let warning_text = '';
+  if (warning) {
+    warning_text = '<div class="text-danger mb-4">Warning: possible hallucination detected.</div>'
+  }
+
+  return `
+    <div class="qa-block">
+      ${warning_text}
+      <span class="text-success" style="font-weight: 500;">Answer: </span>
+      ${answer}
+      <br>
+      ${
+        warning
+        ?
+        `<a class="badge badge-danger mt-4" href="https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.source_based_text_quality.html#langcheck.metrics.en.source_based_text_quality.factual_consistency" target="_blank" data-toggle="tooltip" data-placement="right" title="This is the factual consistency between the LLM's answer and the source document. Click to open the LangCheck documentation.">
+          Factual Consistency Score: ${round(factualConsistencyScore, 4)}
+        </a>`
+        :
+        `<a class="badge badge-success mt-4" href="https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.source_based_text_quality.html#langcheck.metrics.en.source_based_text_quality.factual_consistency" target="_blank" data-toggle="tooltip" data-placement="right" title="This is the factual consistency between the LLM's answer and the source document. Click to open the LangCheck documentation.">
+          Factual Consistency Score: ${round(factualConsistencyScore, 4)}
+        </a>`
+      }
+    </div>
+  `;
 }
 
 function updateMetrics(id) {
-    $.ajax({
-        type: 'GET',
-        url: '/api/metrics/' + id,
-        dataType: 'json',
-        success: function(data) {
-            $('#metricsTable tbody').empty();
+  $.get(`/api/metrics/${id}`)
+    .then(function (data) {
+      $('#metrics-table tbody').empty();
 
-            for (let metric in data) {
-                if (metric !== "completed") {
-                    let value = data[metric] !== null ? data[metric] : '<img src="static/spinner.gif" alt="Loading..." class="spinner">';
-                    $('#metricsTable tbody').append(`<tr><td>${metric}</td><td>${value}</td></tr>`);
-                }
-            }
-
-            if (data.completed) {
-                // Stop polling if metrics computation is completed
-                clearInterval(metricsPollingInterval);
-            }
+      for (let metric in data) {
+        if (metric !== "completed") {
+          let value = data[metric] !== null ? data[metric] : '<div class="spinner-border spinner-border-sm"></div>';
+          $('#metrics-table tbody').append(`<tr><td>${metric}</td><td>${round(value, 4)}</td></tr>`);
         }
+      }
+
+      if (data.completed) {
+        // Stop polling if metrics computation is completed
+        clearInterval(metricsPollingInterval);
+      }
     });
+}
+
+/*************************************************************************
+* Utils
+*************************************************************************/
+
+// Round a float to even with decimal places
+// Rounding logic: https://stackoverflow.com/a/49080858
+function round(n, places) {
+  if (typeof n !== 'number' || Number.isInteger(n)) { return n; }
+  var x = n * Math.pow(10, places);
+  var r = Math.round(x);
+  // Account for precision using Number.EPSILON
+  var br = (Math.abs(x) % 1 > 0.5 - Number.EPSILON && Math.abs(x) % 1 < 0.5 + Number.EPSILON) ? (r % 2 === 0 ? r : r - 1) : r;
+  return br / Math.pow(10, places);
 }
