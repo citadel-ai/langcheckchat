@@ -41,6 +41,9 @@ def main(log_id):
     with sqlite3.connect(DATABASE, isolation_level=None) as conn:
         cursor = conn.cursor()
         if language == 'en':
+            # TODO: Factual consistency is a special case since the local
+            # version of the metric is computed separately. Consider
+            # refactoring this.
             factual_consistency_openai = langcheck.metrics.factual_consistency(
                 response, source, model_type='openai', openai_args=openai_args)
             cursor.execute(
@@ -85,22 +88,48 @@ def main(log_id):
                              langcheck.metrics.ai_disclaimer_similarity,
                              [response], 'ai_disclaimer_similarity', log_id)
         else:
-            add_metric_to_db(cursor, langcheck.metrics.ja.toxicity, [request],
-                             'request_toxicity', log_id)
-            add_metric_to_db(cursor, langcheck.metrics.ja.sentiment, [request],
-                             'request_sentiment', log_id)
-            add_metric_to_db(cursor, langcheck.metrics.ja.fluency, [request],
-                             'request_fluency', log_id)
+            # TODO: Factual consistency is a special case since the local
+            # version of the metric is computed separately. Consider
+            # refactoring this.
+            factual_consistency_openai = langcheck.metrics.ja.factual_consistency(
+                response, source, model_type='openai', openai_args=openai_args)
+            cursor.execute(
+                "UPDATE chat_log SET factual_consistency_openai = ? WHERE id = ?",
+                (factual_consistency_openai.metric_values[0], log_id))
+            add_metric_to_db(cursor,
+                             langcheck.metrics.ja.toxicity, [request],
+                             'request_toxicity',
+                             log_id,
+                             openai_args=openai_args)
+            add_metric_to_db(cursor,
+                             langcheck.metrics.ja.sentiment, [request],
+                             'request_sentiment',
+                             log_id,
+                             openai_args=openai_args)
+            add_metric_to_db(cursor,
+                             langcheck.metrics.ja.fluency, [request],
+                             'request_fluency',
+                             log_id,
+                             openai_args=openai_args)
             add_metric_to_db(
                 cursor, langcheck.metrics.ja.tateishi_ono_yamada_reading_ease,
                 [request], 'request_readability', log_id)
 
-            add_metric_to_db(cursor, langcheck.metrics.ja.toxicity, [response],
-                             'response_toxicity', log_id)
-            add_metric_to_db(cursor, langcheck.metrics.ja.sentiment,
-                             [response], 'response_sentiment', log_id)
-            add_metric_to_db(cursor, langcheck.metrics.ja.fluency, [response],
-                             'response_fluency', log_id)
+            add_metric_to_db(cursor,
+                             langcheck.metrics.ja.toxicity, [response],
+                             'response_toxicity',
+                             log_id,
+                             openai_args=openai_args)
+            add_metric_to_db(cursor,
+                             langcheck.metrics.ja.sentiment, [response],
+                             'response_sentiment',
+                             log_id,
+                             openai_args=openai_args)
+            add_metric_to_db(cursor,
+                             langcheck.metrics.ja.fluency, [response],
+                             'response_fluency',
+                             log_id,
+                             openai_args=openai_args)
             add_metric_to_db(
                 cursor, langcheck.metrics.ja.tateishi_ono_yamada_reading_ease,
                 [response], 'response_readability', log_id)
