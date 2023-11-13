@@ -23,7 +23,9 @@ def add_metric_to_db(cursor,
     cursor.execute(f"UPDATE chat_log SET {name} = ? WHERE id = ?",
                    (metric_value.metric_values[0], log_id))
     if openai_args:
-        metric_value_openai = metric_fn(*metric_args, openai_args=openai_args)
+        metric_value_openai = metric_fn(*metric_args,
+                                        model_type='openai',
+                                        openai_args=openai_args)
         cursor.execute(f"UPDATE chat_log SET {name}_openai = ? WHERE id = ?",
                        (metric_value_openai.metric_values[0], log_id))
 
@@ -44,21 +46,39 @@ def main(log_id):
             cursor.execute(
                 "UPDATE chat_log SET factual_consistency_openai = ? WHERE id = ?",
                 (factual_consistency_openai.metric_values[0], log_id))
-            add_metric_to_db(cursor, langcheck.metrics.toxicity, [request],
-                             'request_toxicity', log_id)
-            add_metric_to_db(cursor, langcheck.metrics.sentiment, [request],
-                             'request_sentiment', log_id)
-            add_metric_to_db(cursor, langcheck.metrics.fluency, [request],
-                             'request_fluency', log_id)
+            add_metric_to_db(cursor,
+                             langcheck.metrics.toxicity, [request],
+                             'request_toxicity',
+                             log_id,
+                             openai_args=openai_args)
+            add_metric_to_db(cursor,
+                             langcheck.metrics.sentiment, [request],
+                             'request_sentiment',
+                             log_id,
+                             openai_args=openai_args)
+            add_metric_to_db(cursor,
+                             langcheck.metrics.fluency, [request],
+                             'request_fluency',
+                             log_id,
+                             openai_args=openai_args)
             add_metric_to_db(cursor, langcheck.metrics.flesch_reading_ease,
                              [request], 'request_readability', log_id)
 
-            add_metric_to_db(cursor, langcheck.metrics.toxicity, [response],
-                             'response_toxicity', log_id)
-            add_metric_to_db(cursor, langcheck.metrics.sentiment, [response],
-                             'response_sentiment', log_id)
-            add_metric_to_db(cursor, langcheck.metrics.fluency, [response],
-                             'response_fluency', log_id)
+            add_metric_to_db(cursor,
+                             langcheck.metrics.toxicity, [response],
+                             'response_toxicity',
+                             log_id,
+                             openai_args=openai_args)
+            add_metric_to_db(cursor,
+                             langcheck.metrics.sentiment, [response],
+                             'response_sentiment',
+                             log_id,
+                             openai_args=openai_args)
+            add_metric_to_db(cursor,
+                             langcheck.metrics.fluency, [response],
+                             'response_fluency',
+                             log_id,
+                             openai_args=openai_args)
             add_metric_to_db(cursor, langcheck.metrics.flesch_reading_ease,
                              [response], 'response_readability', log_id)
             add_metric_to_db(cursor,
