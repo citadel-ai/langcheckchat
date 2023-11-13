@@ -1,4 +1,4 @@
-CREATE TABLE chat_log (
+CREATE TABLE IF NOT EXISTS chat_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     request TEXT NOT NULL,
     response TEXT NOT NULL,
