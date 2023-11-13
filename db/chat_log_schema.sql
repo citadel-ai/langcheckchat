@@ -15,5 +15,6 @@ CREATE TABLE IF NOT EXISTS chat_log (
     response_readability REAL,
     ai_disclaimer_similarity REAL,
     factual_consistency REAL,
+    factual_consistency_openai REAL,
     completed BOOLEAN default 0
 );
