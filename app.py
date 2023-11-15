@@ -1,20 +1,18 @@
-from flask import Flask, request, jsonify
-from datetime import datetime
+import os
+import pickle
 import sqlite3
 import subprocess
-import pickle
-import os
-import pytz
-
-from dotenv import load_dotenv
-
-from llama_index.llms import AzureOpenAI
-from llama_index.embeddings import OpenAIEmbedding
-from llama_index import (GPTVectorStoreIndex, SimpleWebPageReader,
-                         StringIterableReader, download_loader, ServiceContext,
-                         set_global_service_context)
+from datetime import datetime
 
 import langcheck
+import pytz
+from dotenv import load_dotenv
+from flask import Flask, jsonify, request
+from llama_index import (GPTVectorStoreIndex, ServiceContext,
+                         SimpleWebPageReader, StringIterableReader,
+                         download_loader, set_global_service_context)
+from llama_index.embeddings import OpenAIEmbedding
+from llama_index.llms import AzureOpenAI
 
 load_dotenv()
 
@@ -99,6 +97,17 @@ def connect_db():
 
 
 DATABASE = 'db/langcheckchat.db'
+
+
+def initialize_db():
+    with open('db/chat_log_schema.sql', 'r') as file:
+        sql_script = file.read()
+
+    with connect_db() as con:
+        cursor = con.cursor()
+        cursor.executescript(sql_script)
+        con.commit()
+
 
 app = Flask(__name__)
 
@@ -224,4 +233,5 @@ def metrics_endpoint(log_id):
 
 
 if __name__ == '__main__':
+    initialize_db()
     app.run(host='127.0.0.1', debug=True)

@@ -1,6 +1,6 @@
 Flask
 python-dotenv
-llama_index
+llama_index==0.8.59
 llama-cpp-python
 torch==2.0.1
 transformers[torch]==4.22.1
