@@ -3,7 +3,10 @@ import sqlite3
 import sys
 
 import langcheck.metrics
+from dotenv import load_dotenv
 import openai
+
+load_dotenv()
 
 openai.api_type = 'azure'
 openai.api_base = os.environ['AZURE_OPENAI_API_BASE']

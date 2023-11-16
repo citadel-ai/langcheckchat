@@ -16,14 +16,14 @@ $('#user-input').keypress(function (event) {
 
 $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
 
+$.get('/api/questions').then((response) => response.forEach((v, i) => $('#user-input').append(`<option value="${i}">${v}</option>`)));
+
 /*************************************************************************
 * Event handlers
 *************************************************************************/
 
 function sendMessage() {
-  const language = $("#language-toggle").val();
-  const question = $('#user-input').val();
-  if (question.trim() === "") { return; }  // Don't send an empty message
+  const questionId = parseInt($('#user-input').val());
 
 
   // Show loading indicator
@@ -42,7 +42,7 @@ function sendMessage() {
 
   $.post({
     url: '/api/chat',
-    data: JSON.stringify({ message: question, language: language }),
+    data: JSON.stringify({ id: questionId }),
     contentType: 'application/json;charset=UTF-8',
     dataType: 'json',
   }).then(function (data) {

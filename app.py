@@ -1,95 +1,87 @@
-import os
-import pickle
 import sqlite3
 import subprocess
 from datetime import datetime
 
-import langcheck
 import pytz
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
-from llama_index import (GPTVectorStoreIndex, ServiceContext,
-                         SimpleWebPageReader, StringIterableReader,
-                         download_loader, set_global_service_context)
-from llama_index.embeddings import OpenAIEmbedding
-from llama_index.llms import AzureOpenAI
+
+EXAMPLE_Q_A = [
+    {
+        'question': 'LangCheck社の福利厚生について教えてください。',
+        'right': {
+            'response': 'LangCheck社の福利厚生には、\n健康保険および厚生年金の加入\n退職金制度\n子育て支援制度(保育補助、育児休暇など)\nスポーツクラブやレジャー施設の割引利用\n社員食堂の提供\n学術・研究会への参加支援\nのような内容が含まれます。',
+            'factual_consistency_score': 0.652806
+        },
+        'wrong': {
+            'response': 'LangCheck社の福利厚生には、\nフィナンシャルプランニング支援\nリモートワーク補助\n住宅ローン補助\nのような内容が含まれます。',
+            'factual_consistency_score': 0.060735
+        },
+        'source': 'LangCheck社 福利厚生ポリシー\n\nLangCheck社では、福利厚生として以下のようなサポートを社員に提供しています。\n\n- 健康保険・厚生年金の加入\n- 退職金制度\n- 子育て支援制度\n- 外部施設の割引利用\n- 社員食堂\n- 学術・研究会への参加支援\n\nなお、以下のようなサービスは現在は対象としておりません。今後の対応を予定しております。\n- フィナンシャルプランニング支援\n- リモートワーク補助\n- 住宅ローン補助'
+    },
+    {
+        'question': '顧客からのクレーム対応についてまず初めに対処するべき内容は何ですか。',
+        'right': {
+            'response': '顧客からクレームを受けた場合、まずクレーム内容、日時、連絡先、関係者などの情報を収集し業務システムに記録してください。',
+            'factual_consistency_score': 0.618151
+        },
+        'wrong': {
+            'response': '顧客からクレームを受けた場合、まず顧客への解決策を 12 時間以内に具体的に提案してください。',
+            'factual_consistency_score': 0.024938
+        },
+        'source': 'LangCheck社　クレーム対応マニュアル\n\n顧客からクレームを受けた場合、以下の手順にしたがって対応してください。\n- まず最初に、クレーム内容、日時、連絡先、関係者などの情報を収集し業務システムに記録してください。\n- 次に、対応する部署からのシステム上での返答を待ってください。\n- 返答があり次第、それに従ってお客様に連絡し、必要に応じてフォローアップを行ってください。'
+    },
+    {
+        'question': '新製品 LangCheck Parrot はいつリリース予定ですか。',
+        'right': {
+            'response': 'LangCheck Parrotの発売予定日は2022年2月15日です。',
+            'factual_consistency_score': 0.927797
+        },
+        'wrong': {
+            'response': 'LangCheck Parrotの発売予定日は2022年4月1日です。',
+            'factual_consistency_score': 0.003726
+        },
+        'source': '-- プロダクトロードマップ 2022 --\n2022年上半期に予定された新製品とその発売予定日は以下のようになっています。\nLangCheck Elephant: 2022年1月20日発売予定です。\nLangCheck Parrot: 2022年2月15日発売予定です。\nLangCheck Tiger: 2022年4月1日に発売予定です。'
+    },
+    {
+        'question': 'Salesforce にアクセスができない。どのように対処すれば良いか。',
+        'right': {
+            'response': 'Salesforce にアクセスできない場合、次の手順を試してください。\nインターネット接続を確認してください。Wi-Fiやモバイルデータなどの接続が安定していることを確認しましょう。\nブラウザのキャッシュをクリアしてみてください。一時的な通信の問題が原因である場合、キャッシュをクリアすることで解決することがあります。\nSalesforceのダウンタイムを確認してください。定期的なメンテナンスやシステムのアップデートのために、一時的にアクセスが制限される場合があります。\nサポートチームに連絡してください。問題が継続する場合、サポートチームに連絡して具体的な問題を報告し、解決策を求めることができます。',
+            'factual_consistency_score': 0.718692
+        },
+        'wrong': {
+            'response': 'Salesforce にアクセスできない場合、次の手順を試してください。\nパスワードのリセットリンクをクリックしてください。ログイン画面で「パスワードをお忘れですか?」というリンクがある場合、それをクリックするとパスワードのリセット 手続きが始まります。\nパスワードのリセットメールをチェックしてください。登録されているメールアドレスにパスワードのリセットリンクが送信されます。メールを受信したら、リンクをクリックして新しいパスワードを設定してください。\nパスワードのリセット方法を確認してください。企業によっては、セキュリティポリシーやディレクトリ統合などの設定により、パスワードリセットの手順が異なる場合があります。その場合は、IT 部門やシステム管理者に相談して適切な手順を確認してください。',
+            'factual_consistency_score': 0.49056
+        },
+        'source': 'Salesforce アクセストラブルシューティングガイド\n\nSalesforceにアクセスできない場合は、まずインターネット接続を確認する。Wi-Fiやモバイルデータなどの接続が安定していることを確認する。\n次にブラウザのキャッシュをクリアする。一時的な通信の問題が原因である場合、キャッシュをクリアすることで解決することがある。\n次にSalesforceのダウンタイムを確認する。定期メンテナンスやシステムアップデートによる、一時的なアクセス制限の可能性あり。\n解決しない場合、サポートチームに連絡する。問題が継続する場合、サポートチームに解決策を求めることができる。\n\nSalesforceのパスワードを忘れた場合は、まずパスワードのリセットリンクをクリックする。ログイン画面で「パスワードをお忘れですか?」というリンクがある場合、クリックするとリセット手続きが始まる。\n次にパスワードのリセットメールをチェックする。登録されているメールアドレスにパスワードのリセットリンクが送信されるので、受信したらリンクをクリックして新しいパスワードを設定する。\nパスワードのリセット方法を確認する。企業によっては、セキュリティポリシーやディレクトリ統合などの設定により、パスワードリセットの手順が異なる場合がある。その場合、IT 部門やシステム管理者に相談して適切な手順を確認する　。'
+    },
+    {
+        'question': 'クライアントへの製品の配送期間はどのくらいですか?',
+        'right': {
+            'response': '通常、クライアントへの製品の配送は注文から 3 営業日以内に完了されています。',
+            'factual_consistency_score': 0.726461
+        },
+        'wrong': {
+            'response': '通常、クライアントへの製品の配送は注文の翌日に完了されています。',
+            'factual_consistency_score': 0.254557
+        },
+        'source': '物流部　配送プロセス詳細ドキュメント\n\nまず、発注の翌日以内に製品がクライアントの居住地域に到着します。その後クライアントへの製品の発送が行われます。ここまでが通常3営業日以内に完了されます。'
+    },
+    {
+        'question': 'LangCheck Parrot は顧客からの要望に対応するため、カスタマイズは可能ですか?',
+        'right': {
+            'response': 'LangCheck Parrot では、顧客の要望に対応するため、いくつか有料のカスタマイズオプションを提供しています。',
+            'factual_consistency_score': 0.915266
+        },
+        'wrong': {
+            'response': 'LangCheck Parrot をカスタマイズすることはできません　。',
+            'factual_consistency_score': 0.001218
+        },
+        'source': 'LangCheck Parrot カスタマイズ対応ガイド　\n\nLangCheck Parrotでは、保証期間延長、カラーリング変更等のカスタマイズオプションを有料で提供しています。これによって、より柔軟に顧客の要望に対応することができます。'
+    },
+]
 
 load_dotenv()
-
-# initalize factual consistency
-print(langcheck.metrics.factual_consistency("I'm Bob", "I'm Bob"))
-print(langcheck.metrics.ja.factual_consistency("僕はボブ", "僕はボブ"))
-
-SAVED_DOCUMENTS = 'docs.pkl'
-if os.path.exists(SAVED_DOCUMENTS):
-    with open(SAVED_DOCUMENTS, 'rb') as f:
-        documents = pickle.load(f)
-else:
-    loader = SimpleWebPageReader(html_to_text=True)
-    pages = [
-        "https://langcheck.readthedocs.io/en/latest/langcheck.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.reference_based_text_quality.html",
-        "https://langcheck.readthedocs.io/en/latest/installation.html",
-        "https://langcheck.readthedocs.io/en/latest/metrics.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.utils.io.html",
-        "https://langcheck.readthedocs.io/en/latest/index.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.ja.reference_free_text_quality.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.ja.html",
-        "https://langcheck.readthedocs.io/en/latest/py-modindex.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.metric_value.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.text_structure.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.plot.html",
-        "https://langcheck.readthedocs.io/en/latest/genindex.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.source_based_text_quality.html",
-        "https://langcheck.readthedocs.io/en/latest/contributing.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.reference_based_text_quality.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.ja.reference_based_text_quality.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.utils.html",
-        "https://langcheck.readthedocs.io/en/latest/langcheck.metrics.en.reference_free_text_quality.html",
-        "https://langcheck.readthedocs.io/en/latest/quickstart.html",
-    ]
-    documents = loader.load_data(urls=pages)
-
-    MarkdownReader = download_loader("MarkdownReader")
-    markdown_loader = MarkdownReader()
-    markdown_strs = []
-    for document in documents:
-        markdown_docs = markdown_loader.load_data(file=None,
-                                                  content=document.text)
-        markdown_strs.append('\n'.join([mdoc.text for mdoc in markdown_docs]))
-
-    documents = StringIterableReader().load_data(markdown_strs)
-    with open(SAVED_DOCUMENTS, 'wb') as f:
-        pickle.dump(documents, f)
-
-llm = AzureOpenAI(
-    model=os.environ['AZURE_OPENAI_API_MODEL'],
-    engine=os.environ['AZURE_OPENAI_API_DEPLOYMENT'],
-    api_key=os.environ['AZURE_OPENAI_API_KEY'],
-    api_base=os.environ['AZURE_OPENAI_API_BASE'],
-    api_type='azure',
-    api_version='2023-05-15',
-)
-
-embed_model = OpenAIEmbedding(
-    model=os.environ['AZURE_OPENAI_API_EMBEDDING_MODEL'],
-    deployment_name=os.environ['AZURE_OPENAI_API_EMBEDDING_DEPLOYMENT'],
-    api_key=os.environ['AZURE_OPENAI_API_KEY'],
-    api_base=os.environ['AZURE_OPENAI_API_BASE'],
-    api_type='azure',
-    api_version='2023-05-15',
-)
-
-service_context = ServiceContext.from_defaults(
-    llm=llm,
-    embed_model=embed_model,
-)
-
-set_global_service_context(service_context)
-
-index = GPTVectorStoreIndex.from_documents(documents)
 
 
 def connect_db():
@@ -117,45 +109,16 @@ def home():
     return app.send_static_file('index.html')
 
 
-@app.route('/logs', methods=['GET'])
-def log_page():
-    return app.send_static_file('logs.html')
-
-
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    user_message = request.get_json().get('message', '')
-    language = request.get_json().get('language', 'en')
-
-    # Generate response message
-    if language == 'ja':
-        user_message_sent = '日本語で答えてください\n' + user_message
-    else:
-        user_message_sent = user_message
-    response = index.as_query_engine().query(user_message_sent)
-    response_message = str(response)
-    sources = [node.node.text for node in response.source_nodes]
-    source = '\n'.join(sources)
-
-    # TODO: Get from user inputs
-    language = request.get_json().get('language', 'en')
-    print(language)
-
-    if language == 'ja':
-        # TODO: Remove this once the problem is fixed in langcheck package
-        if len(source) < 512:
-            factual_consistency_score = langcheck.metrics.ja.factual_consistency(
-                response_message, source).metric_values[0]
-        else:
-            factual_consistency_score_fst = langcheck.metrics.ja.factual_consistency(
-                response_message, source[:len(source) // 2]).metric_values[0]
-            factual_consistency_score_snd = langcheck.metrics.ja.factual_consistency(
-                response_message, source[len(source) // 2:]).metric_values[0]
-            factual_consistency_score = max(factual_consistency_score_fst,
-                                            factual_consistency_score_snd)
-    else:
-        factual_consistency_score = langcheck.metrics.factual_consistency(
-            response_message, source).metric_values[0]
+    qa_id = int(request.get_json()['id'])
+    # TODO: Add a flag for right/wrong
+    used_bot = 'right'
+    language = 'ja'
+    user_message = EXAMPLE_Q_A[qa_id]['question']
+    response_message = EXAMPLE_Q_A[qa_id][used_bot]['response']
+    factual_consistency_score = EXAMPLE_Q_A[qa_id][used_bot]['factual_consistency_score']
+    source = EXAMPLE_Q_A[qa_id]['source']
 
     timestamp = datetime.now(
         pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S')
@@ -178,27 +141,9 @@ def chat():
                    source=source,
                    id=log_id)
 
-
-@app.route('/api/logs', methods=['GET'])
-def logs():
-    page = int(request.args.get('page', 1))
-    per_page = 10
-    offset = (page - 1) * per_page
-
-    con = connect_db()
-    cur = con.cursor()
-    cur.execute(
-        'SELECT request, response, timestamp FROM chat_log ORDER BY timestamp DESC LIMIT ? OFFSET ?',
-        (per_page, offset))
-
-    logs = [{
-        "request": row[0],
-        "response": row[1],
-        "timestamp": row[2]
-    } for row in cur.fetchall()]
-    con.close()
-
-    return jsonify(logs=logs)
+@app.route('/api/questions', methods=['GET'])
+def questions():
+    return [qa['question'] for qa in EXAMPLE_Q_A]
 
 
 @app.route('/api/metrics/<log_id>', methods=['GET'])
