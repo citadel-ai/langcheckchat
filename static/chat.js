@@ -6,6 +6,16 @@ let metricsPollingInterval;
 
 $('#send-button').click(sendMessage);
 
+$('#right-button').on('click', function() {
+  $('.right').prop('hidden', false);
+  $('.wrong').prop('hidden', true);
+});
+
+$('#wrong-button').on('click', function() {
+  $('.right').prop('hidden', true);
+  $('.wrong').prop('hidden', false);
+});
+
 // Trigger send-button click event when Enter key is pressed
 $('#user-input').keypress(function (event) {
   if (event.which == 13) { // 13 is the Enter key's code
@@ -42,7 +52,7 @@ function sendMessage() {
 
   $.post({
     url: '/api/chat',
-    data: JSON.stringify({ id: questionId }),
+    data: JSON.stringify({ id: questionId, botType: $('input[name="botType"]:checked').val() }),
     contentType: 'application/json;charset=UTF-8',
     dataType: 'json',
   }).then(function (data) {

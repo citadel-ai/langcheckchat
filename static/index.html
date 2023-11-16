@@ -17,8 +17,22 @@
 
 <body>
   <div class="container mt-3">
-    <img src="/static/logo.png" alt="Logo" class="logo">
-    <h1 class="mt-3 mb-5 text-center">Ask me anything about LangCheck!</h1>
+    <img src="/static/logo.svg" alt="Logo" class="logo right">
+    <img src="/static/wrong_logo.svg" alt="Logo" class="logo wrong" hidden>
+    <h1 class="right mt-3 mb-5 text-center">LangCheck Bot</h1>
+    <h1 class="wrong mt-3 mb-5 text-center" hidden><span class="font-weight-bold" style="color: red;">Wrong</span>Check Bot</h1>
+    <div class="text-center">
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="botType" id="right-button" value="right" checked>
+        <label class="form-check-label" for="right">LangCheck Bot</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="botType" id="wrong-button" value="wrong">
+        <label class="form-check-label" for="wrong">WrongCheck Bot</label>
+      </div>
+    </div>
+    <p class="mt-3 mb-5 text-center">LangCheckの社内情報Q&Aボットです</h1>
+
 
     <div class="input-group mb-3">
       <select class="custom-select" id="user-input">

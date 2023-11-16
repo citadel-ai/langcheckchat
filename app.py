@@ -115,7 +115,7 @@ def chat():
     sleep(3)
     qa_id = int(request.get_json()['id'])
     # TODO: Add a flag for right/wrong
-    used_bot = 'right'
+    used_bot = request.get_json()['botType']
     language = 'ja'
     user_message = EXAMPLE_Q_A[qa_id]['question']
     response_message = EXAMPLE_Q_A[qa_id][used_bot]['response']
