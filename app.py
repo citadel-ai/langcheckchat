@@ -5,6 +5,7 @@ from datetime import datetime
 import pytz
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
+from time import sleep
 
 EXAMPLE_Q_A = [
     {
@@ -111,6 +112,7 @@ def home():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
+    sleep(3)
     qa_id = int(request.get_json()['id'])
     # TODO: Add a flag for right/wrong
     used_bot = 'right'

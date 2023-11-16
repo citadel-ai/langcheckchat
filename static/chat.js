@@ -72,8 +72,7 @@ function generateAnswerRow(answer, factualConsistencyScore, warning) {
     <div class="qa-block">
       ${warning_text}
       <span class="text-success" style="font-weight: 500;">Answer: </span>
-      ${answer}
-      <br>
+      <div class="mt-0 mb-0"style="white-space: pre-wrap;">${answer}</div>
       ${
         warning
         ?
