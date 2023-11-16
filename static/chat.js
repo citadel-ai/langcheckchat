@@ -75,7 +75,7 @@ function sendMessage() {
 function generateAnswerRow(answer, factualConsistencyScore, warning) {
   let warning_text = '';
   if (warning) {
-    warning_text = '<div class="text-danger mb-4">Warning: possible hallucination detected.</div>'
+    warning_text = '<div class="text-danger mb-4">ハルシネーションの可能性のある出力です。必ず出典と照らし合わせて再度内容をチェックしてださい。</div>'
   }
 
   return `
