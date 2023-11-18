@@ -1,4 +1,4 @@
-CREATE TABLE chat_log (
+CREATE TABLE IF NOT EXISTS chat_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     request TEXT NOT NULL,
     response TEXT NOT NULL,
@@ -6,14 +6,21 @@ CREATE TABLE chat_log (
     source TEXT NOT NULL,
     language TEXT NOT NULL,
     request_toxicity REAL,
+    request_toxicity_openai REAL,
     request_sentiment REAL,
+    request_sentiment_openai REAL,
     request_fluency REAL,
+    request_fluency_openai REAL,
     request_readability REAL,
     response_toxicity REAL,
+    response_toxicity_openai REAL,
     response_sentiment REAL,
+    response_sentiment_openai REAL,
     response_fluency REAL,
+    response_fluency_openai REAL,
     response_readability REAL,
     ai_disclaimer_similarity REAL,
     factual_consistency REAL,
+    factual_consistency_openai REAL,
     completed BOOLEAN default 0
 );
