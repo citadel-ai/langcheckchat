@@ -1,11 +1,9 @@
 from time import sleep
-from flask import Flask, request, jsonify
 from datetime import datetime
 import os
 import pickle
 import sqlite3
 import subprocess
-from datetime import datetime
 
 import langcheck
 import pytz
