@@ -93,18 +93,35 @@ function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
       $('#metrics-table tbody').empty();
-
       for (let metric in data) {
-        if (metric !== "completed") {
+        if (metric !== "completed" && !metric.endsWith('_explanation')) {
           let value = data[metric] !== null ? data[metric] : '<div class="spinner-border spinner-border-sm"></div>';
-          $('#metrics-table tbody').append(`<tr><td>${metric}</td><td>${round(value, 4)}</td></tr>`);
+          $('#metrics-table tbody').append(`<tr><td id=${metric}>${metric}</td><td>${round(value, 4)}</td></tr>`);
         }
       }
 
       if (data.completed) {
+        // Add OpenAI metrics explanation
+        getMetricsExplanation(id);
         // Stop polling if metrics computation is completed
         clearInterval(metricsPollingInterval);
       }
+    });
+}
+
+function getMetricsExplanation(id) {
+  // Add the OpenAI explanation label
+  $.get(`/api/metrics/${id}`)
+  .then(function (data) {
+    for (const metric in data) {
+      if(metric.endsWith('_openai')) {
+        $(`#${metric}`)
+          .attr('data-toggle', 'tooltip')
+          .attr('data-placement', 'left')
+          .attr('title', data[metric + '_explanation']);
+      }
+    }
+    $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
     });
 }
 

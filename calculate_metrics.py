@@ -26,8 +26,8 @@ def add_metric_to_db(cursor,
         metric_value_openai = metric_fn(*metric_args,
                                         model_type='openai',
                                         openai_args=openai_args)
-        cursor.execute(f"UPDATE chat_log SET {name}_openai = ? WHERE id = ?",
-                       (metric_value_openai.metric_values[0], log_id))
+        cursor.execute(f"UPDATE chat_log SET {name}_openai = ?, {name}_openai_explanation = ? WHERE id = ?",
+                       (metric_value_openai.metric_values[0], metric_value_openai.explanations[0], log_id))
 
 
 def main(log_id):
@@ -94,8 +94,8 @@ def main(log_id):
             factual_consistency_openai = langcheck.metrics.ja.factual_consistency(
                 response, source, model_type='openai', openai_args=openai_args)
             cursor.execute(
-                "UPDATE chat_log SET factual_consistency_openai = ? WHERE id = ?",
-                (factual_consistency_openai.metric_values[0], log_id))
+                "UPDATE chat_log SET factual_consistency_openai = ?, factual_consistency_openai_explanation = ? WHERE id = ?",
+                (factual_consistency_openai.metric_values[0], factual_consistency_openai.explanations[0], log_id))
             add_metric_to_db(cursor,
                              langcheck.metrics.ja.toxicity, [request],
                              'request_toxicity',
