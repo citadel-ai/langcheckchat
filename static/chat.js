@@ -89,6 +89,14 @@ function generateAnswerRow(answer, factualConsistencyScore, warning) {
   `;
 }
 
+const METRICS_WITH_EXPLANATION = [
+  'request_fluency_openai',
+  'request_sentiment_openai',
+  'request_toxicity_openai',
+  'response_fluency_openai',
+  'response_sentiment_openai',
+  'response_toxicity_openai'
+]
 function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
@@ -96,9 +104,14 @@ function updateMetrics(id) {
       for (let metric in data) {
         if (metric !== "completed" && !metric.endsWith('_explanation')) {
           let value = data[metric] !== null ? data[metric] : '<div class="spinner-border spinner-border-sm"></div>';
-          $('#metrics-table tbody').append(`<tr><td id=${metric}>${metric}</td><td>${round(value, 4)}</td></tr>`);
+          if (METRICS_WITH_EXPLANATION.includes(metric)) {
+            $('#metrics-table tbody').append(`<tr><td id=${metric}>${metric}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="left"></td><td>${round(value, 4)}</td></tr>`);
+          } else {
+            $('#metrics-table tbody').append(`<tr><td>${metric}</td><td>${round(value, 4)}</td></tr>`);
+          }
         }
       }
+      feather.replace();
 
       if (data.completed) {
         // Add OpenAI metrics explanation
@@ -115,14 +128,12 @@ function getMetricsExplanation(id) {
   .then(function (data) {
     for (const metric in data) {
       if(metric.endsWith('_openai')) {
-        $(`#${metric}`)
-          .attr('data-toggle', 'tooltip')
-          .attr('data-placement', 'left')
-          .attr('title', data[metric + '_explanation']);
+        $(`#${metric} svg`).attr('data-original-title', data[metric + '_explanation'])
+        $('#metrics-table tbody svg').removeClass("d-none");
+        $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
       }
     }
-    $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
-    });
+  });
 }
 
 /*************************************************************************
