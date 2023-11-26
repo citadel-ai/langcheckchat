@@ -96,7 +96,7 @@ const METRICS_WITH_EXPLANATION = [
   'response_fluency_openai',
   'response_sentiment_openai',
   'response_toxicity_openai'
-]
+];
 function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
@@ -111,7 +111,6 @@ function updateMetrics(id) {
           }
         }
       }
-      feather.replace();
 
       if (data.completed) {
         // Add OpenAI metrics explanation
@@ -123,17 +122,18 @@ function updateMetrics(id) {
 }
 
 function getMetricsExplanation(id) {
-  // Add the OpenAI explanation label
+  // Add the metric explanation tooltips
   $.get(`/api/metrics/${id}`)
   .then(function (data) {
     for (const metric in data) {
       if(metric.endsWith('_openai')) {
-        $(`#${metric} svg`).attr('data-original-title', data[metric + '_explanation'])
+        $(`#${metric} svg`).attr('data-original-title', data[metric + '_explanation']);
         $('#metrics-table tbody svg').removeClass("d-none");
         $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
       }
     }
   });
+  feather.replace();
 }
 
 /*************************************************************************
