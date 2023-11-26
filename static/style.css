@@ -122,3 +122,7 @@ summary {
   position: relative;
   bottom: 1px;
 }
+
+.show-source {
+  white-space: nowrap;
+}
