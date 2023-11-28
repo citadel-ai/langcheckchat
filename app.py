@@ -14,11 +14,15 @@ from llama_index import (GPTVectorStoreIndex, ServiceContext,
 from llama_index.embeddings import OpenAIEmbedding
 from llama_index.llms import AzureOpenAI
 
+from calculate_metrics import add_init_to_db, get_factual_consistency_score
+
 load_dotenv()
 
 # initalize factual consistency
-print(langcheck.metrics.factual_consistency("I'm Bob", "I'm Bob"))
-print(langcheck.metrics.ja.factual_consistency("僕はボブ", "僕はボブ"))
+if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True':
+    print('Computing factual consistency..')
+    print(langcheck.metrics.factual_consistency("I'm Bob", "I'm Bob"))
+    print(langcheck.metrics.ja.factual_consistency("僕はボブ", "僕はボブ"))
 
 SAVED_DOCUMENTS = 'docs.pkl'
 if os.path.exists(SAVED_DOCUMENTS):
@@ -141,34 +145,17 @@ def chat():
     language = request.get_json().get('language', 'en')
     print(language)
 
-    if language == 'ja':
-        # TODO: Remove this once the problem is fixed in langcheck package
-        if len(source) < 512:
-            factual_consistency_score = langcheck.metrics.ja.factual_consistency(
-                response_message, source).metric_values[0]
-        else:
-            factual_consistency_score_fst = langcheck.metrics.ja.factual_consistency(
-                response_message, source[:len(source) // 2]).metric_values[0]
-            factual_consistency_score_snd = langcheck.metrics.ja.factual_consistency(
-                response_message, source[len(source) // 2:]).metric_values[0]
-            factual_consistency_score = max(factual_consistency_score_fst,
-                                            factual_consistency_score_snd)
-    else:
-        factual_consistency_score = langcheck.metrics.factual_consistency(
-            response_message, source).metric_values[0]
-
+    # Compute the factual consistency score and add it along with the chat
+    # data to the db
+    factual_consistency_score, factual_consistency_explanation = get_factual_consistency_score(
+        source, response_message, language)
     timestamp = datetime.now(
         pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S')
+    log_id = add_init_to_db(user_message, response_message, source, language,
+                            factual_consistency_score,
+                            factual_consistency_explanation, timestamp)
 
-    with connect_db() as con:
-        cursor = con.cursor()
-        cursor.execute(
-            'INSERT INTO chat_log (request, response, source, language, factual_consistency, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
-            (user_message, response_message, source, language,
-             factual_consistency_score, timestamp))
-        log_id = cursor.lastrowid
-        con.commit()
-
+    # Compute and log all the other metrics
     subprocess.Popen(["python", "calculate_metrics.py", str(log_id)])
     warning = factual_consistency_score < 0.5
 
