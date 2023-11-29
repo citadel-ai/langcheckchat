@@ -195,9 +195,17 @@ def metrics_endpoint(log_id):
 
         # Fetch all column names
         cursor.execute('PRAGMA table_info(chat_log)')
+        cols_to_exclude = ["id", "timestamp", "request", "response", "source"]
+        if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'False':
+            cols_to_exclude += [
+                'request_toxicity', 'response_toxicity', 'request_sentiment',
+                'response_sentiment', 'request_fluency', 'response_fluency',
+                'factual_consistency'
+            ]
+
         columns = [
-            col[1] for col in cursor.fetchall() if col[1] not in
-            ["id", "timestamp", "request", "response", "source", "completed"]
+            col[1] for col in cursor.fetchall()
+            if col[1] not in cols_to_exclude
         ]
 
         # Fetch the latest metrics

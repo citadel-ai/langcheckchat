@@ -96,7 +96,10 @@ def add_metric_to_db(cursor,
                      name,
                      log_id,
                      openai_args=None):
-    if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True':
+    # Calculate the local metric if local metrics are enabled or if this metric
+    # does not have an OpenAI version
+    if os.environ[
+            'ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True' or openai_args is None:
         metric_value = metric_fn(*metric_args)
         cursor.execute(f"UPDATE chat_log SET {name} = ? WHERE id = ?",
                        (metric_value.metric_values[0], log_id))
