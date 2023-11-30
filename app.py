@@ -215,16 +215,13 @@ def logs():
     offset = (page - 1) * per_page
 
     con = connect_db()
+    con.row_factory = sqlite3.Row
     cur = con.cursor()
     cur.execute(
-        'SELECT request, response, timestamp FROM chat_log ORDER BY timestamp DESC LIMIT ? OFFSET ?',
+        'SELECT * FROM chat_log ORDER BY timestamp DESC LIMIT ? OFFSET ?',
         (per_page, offset))
 
-    logs = [{
-        "request": row[0],
-        "response": row[1],
-        "timestamp": row[2]
-    } for row in cur.fetchall()]
+    logs = [dict(row) for row in cur.fetchall()]
     con.close()
 
     return jsonify(logs=logs)
