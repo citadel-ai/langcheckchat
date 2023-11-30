@@ -3,6 +3,12 @@
 *************************************************************************/
 
 let metricsPollingInterval;
+let chatEndpoint;
+if (document.location.pathname == '/demo') {
+  chatEndpoint = '/api/chat_demo'  // Get canned responses to speed up live demos
+} else {
+  chatEndpoint = '/api/chat'
+}
 
 $('#send-button').click(sendMessage);
 
@@ -41,7 +47,7 @@ function sendMessage() {
   $('#sources-table tbody pre').empty();
 
   $.post({
-    url: '/api/chat',
+    url: chatEndpoint,
     data: JSON.stringify({ message: question, language: language }),
     contentType: 'application/json;charset=UTF-8',
     dataType: 'json',
