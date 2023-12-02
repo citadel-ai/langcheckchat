@@ -101,7 +101,8 @@ const METRICS_WITH_EXPLANATION = [
   'request_toxicity_openai',
   'response_fluency_openai',
   'response_sentiment_openai',
-  'response_toxicity_openai'
+  'response_toxicity_openai',
+  'factual_consistency_openai'
 ];
 function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
