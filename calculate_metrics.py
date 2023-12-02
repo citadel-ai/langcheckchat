@@ -133,8 +133,9 @@ def main(log_id):
                     model_type='openai',
                     openai_args=openai_args)
                 cursor.execute(
-                    "UPDATE chat_log SET factual_consistency_openai = ? WHERE id = ?",
-                    (factual_consistency_openai.metric_values[0], log_id))
+                    "UPDATE chat_log SET factual_consistency_openai = ?, factual_consistency_openai_explanation = ? WHERE id = ?",
+                    (factual_consistency_openai.metric_values[0],
+                     factual_consistency_openai.explanations[0], log_id))
             add_metric_to_db(cursor,
                              langcheck.metrics.toxicity, [request],
                              'request_toxicity',
