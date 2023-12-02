@@ -126,3 +126,7 @@ summary {
 .show-source {
   white-space: nowrap;
 }
+
+.tooltip-inner {
+    min-width: 300px;
+}
