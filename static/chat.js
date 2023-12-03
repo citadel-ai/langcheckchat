@@ -112,7 +112,7 @@ function updateMetrics(id) {
         if (metric !== "completed" && !metric.endsWith('_explanation')) {
           let value = data[metric] !== null ? data[metric] : '<div class="spinner-border spinner-border-sm"></div>';
           if (METRICS_WITH_EXPLANATION.includes(metric)) {
-            $('#metrics-table tbody').append(`<tr><td id=${metric}>${metric}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="left"></td><td>${round(value, 4)}</td></tr>`);
+            $('#metrics-table tbody').append(`<tr><td id=${metric}>${metric}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
           } else {
             $('#metrics-table tbody').append(`<tr><td>${metric}</td><td>${round(value, 4)}</td></tr>`);
           }

@@ -26,14 +26,14 @@ function loadLogs(direction) {
                                 <tr>
                                     <td class="d-flex align-items-center">
                                         <span>request_toxicity_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="right" title="${log.request_toxicity_openai_explanation.replace(/"/g, "'")}">
+                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.request_toxicity_openai_explanation.replace(/"/g, "'")}">
                                     </td>
                                     <td>${round(log.request_toxicity_openai, 4)}</td></tr>
                                 <tr><td>request_sentiment</td><td>${round(log.request_sentiment, 4)}</td></tr>
                                 <tr>
                                     <td class="d-flex align-items-center">
                                         <span>request_sentiment_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="right" title="${log.request_sentiment_openai_explanation.replace(/"/g, "'")}">
+                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.request_sentiment_openai_explanation.replace(/"/g, "'")}">
                                     </td>
                                     <td>${round(log.request_sentiment_openai, 4)}</td>
                                 </tr>
@@ -41,7 +41,7 @@ function loadLogs(direction) {
                                 <tr>
                                     <td class="d-flex align-items-center">
                                         <span>request_fluency_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="right" title="${log.request_fluency_openai_explanation.replace(/"/g, "'")}">
+                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.request_fluency_openai_explanation.replace(/"/g, "'")}">
                                     </td>
                                     <td>${round(log.request_fluency_openai, 4)}</td>
                                 </tr>
@@ -49,7 +49,7 @@ function loadLogs(direction) {
                                 <tr>
                                     <td class="d-flex align-items-center">
                                         <span>response_toxicity_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="right" title="${log.response_toxicity_openai_explanation.replace(/"/g, "'")}">
+                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.response_toxicity_openai_explanation.replace(/"/g, "'")}">
                                     </td>
                                     <td>${round(log.response_toxicity_openai, 4)}</td>
                                 </tr>
@@ -57,7 +57,7 @@ function loadLogs(direction) {
                                 <tr>
                                     <td class="d-flex align-items-center">
                                         <span>response_sentiment_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="right" title="${log.response_sentiment_openai_explanation.replace(/"/g, "'")}">
+                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.response_sentiment_openai_explanation.replace(/"/g, "'")}">
                                     </td>
                                     <td>${round(log.response_sentiment_openai, 4)}</td>
                                 </tr>
@@ -65,7 +65,7 @@ function loadLogs(direction) {
                                 <tr>
                                     <td class="d-flex align-items-center">
                                         <span>response_fluency_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="right" title="${log.response_fluency_openai_explanation.replace(/"/g, "'")}">
+                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.response_fluency_openai_explanation.replace(/"/g, "'")}">
                                     </td>
                                     <td>${round(log.response_fluency_openai, 4)}</td>
                                 </tr>
@@ -75,7 +75,7 @@ function loadLogs(direction) {
                                 <tr>
                                     <td class="d-flex align-items-center">
                                         <span>factual_consistency_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="right" title="${log.factual_consistency_openai_explanation.replace(/"/g, "'")}">
+                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.factual_consistency_openai_explanation.replace(/"/g, "'")}">
                                     </td>
                                     <td>${round(log.factual_consistency_openai, 4)}</td>
                                 </tr>
