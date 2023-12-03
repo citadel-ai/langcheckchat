@@ -115,3 +115,18 @@ summary {
   border-color: rgba(27, 31, 35, 0.15) !important;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
 }
+
+.feather {
+  width: 16px;
+  height: 16px;
+  position: relative;
+  bottom: 1px;
+}
+
+.show-source {
+  white-space: nowrap;
+}
+
+.tooltip-inner {
+    min-width: 300px;
+}

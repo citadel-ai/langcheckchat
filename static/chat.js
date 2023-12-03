@@ -95,36 +95,50 @@ function generateAnswerRow(answer, factualConsistencyScore, warning) {
   `;
 }
 
+const METRICS_WITH_EXPLANATION = [
+  'request_fluency_openai',
+  'request_sentiment_openai',
+  'request_toxicity_openai',
+  'response_fluency_openai',
+  'response_sentiment_openai',
+  'response_toxicity_openai',
+  'factual_consistency_openai'
+];
 function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
       $('#metrics-table tbody').empty();
-
       for (let metric in data) {
-        if (metric !== "completed") {
+        if (metric !== "completed" && !metric.endsWith('_explanation')) {
           let value = data[metric] !== null ? data[metric] : '<div class="spinner-border spinner-border-sm"></div>';
-          $('#metrics-table tbody').append(`<tr><td>${metric}</td><td>${round(value, 4)}</td></tr>`);
+          if (METRICS_WITH_EXPLANATION.includes(metric)) {
+            $('#metrics-table tbody').append(`<tr><td id=${metric}>${metric}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
+          } else {
+            $('#metrics-table tbody').append(`<tr><td>${metric}</td><td>${round(value, 4)}</td></tr>`);
+          }
         }
       }
 
       if (data.completed) {
+        // Add OpenAI metrics explanation
+        getMetricsExplanation(id);
         // Stop polling if metrics computation is completed
         clearInterval(metricsPollingInterval);
       }
     });
 }
 
-/*************************************************************************
-* Utils
-*************************************************************************/
-
-// Round a float to even with decimal places
-// Rounding logic: https://stackoverflow.com/a/49080858
-function round(n, places) {
-  if (typeof n !== 'number' || Number.isInteger(n)) { return n; }
-  var x = n * Math.pow(10, places);
-  var r = Math.round(x);
-  // Account for precision using Number.EPSILON
-  var br = (Math.abs(x) % 1 > 0.5 - Number.EPSILON && Math.abs(x) % 1 < 0.5 + Number.EPSILON) ? (r % 2 === 0 ? r : r - 1) : r;
-  return br / Math.pow(10, places);
+function getMetricsExplanation(id) {
+  // Add the metric explanation tooltips
+  $.get(`/api/metrics/${id}`)
+  .then(function (data) {
+    for (const metric in data) {
+      if(metric.endsWith('_openai')) {
+        $(`#${metric} svg`).attr('data-original-title', data[metric + '_explanation']);
+        $('#metrics-table tbody svg').removeClass("d-none");
+        $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
+      }
+    }
+  });
+  feather.replace();
 }
