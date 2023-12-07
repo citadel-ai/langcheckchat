@@ -10,10 +10,10 @@ import pytz
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from llama_index import (GPTVectorStoreIndex, ServiceContext,
-                         SimpleWebPageReader, StringIterableReader,
                          download_loader, set_global_service_context)
-from llama_index.embeddings import OpenAIEmbedding
+from llama_index.embeddings import AzureOpenAIEmbedding
 from llama_index.llms import AzureOpenAI
+from llama_index.readers import SimpleWebPageReader, StringIterableReader
 
 from calculate_metrics import add_init_to_db, get_factual_consistency_score
 
@@ -72,20 +72,17 @@ else:
 llm = AzureOpenAI(
     model=os.environ['AZURE_OPENAI_API_MODEL'],
     engine=os.environ['AZURE_OPENAI_API_DEPLOYMENT'],
-    api_key=os.environ['AZURE_OPENAI_API_KEY'],
-    api_base=os.environ['AZURE_OPENAI_API_BASE'],
+    api_key=os.environ['AZURE_OPENAI_KEY'],
+    api_base=os.environ['AZURE_OPENAI_ENDPOINT'],
     api_type='azure',
-    api_version='2023-05-15',
+    api_version=os.environ['OPENAI_API_VERSION'],
 )
 
-embed_model = OpenAIEmbedding(
+embed_model = AzureOpenAIEmbedding(
     model=os.environ['AZURE_OPENAI_API_EMBEDDING_MODEL'],
-    deployment_name=os.environ['AZURE_OPENAI_API_EMBEDDING_DEPLOYMENT'],
-    api_key=os.environ['AZURE_OPENAI_API_KEY'],
-    api_base=os.environ['AZURE_OPENAI_API_BASE'],
-    api_type='azure',
-    api_version='2023-05-15',
-)
+    api_key=os.environ['AZURE_OPENAI_KEY'],
+    api_version=os.environ['OPENAI_API_VERSION'],
+    api_endpoint=os.environ['AZURE_OPENAI_ENDPOINT'])
 
 service_context = ServiceContext.from_defaults(
     llm=llm,
