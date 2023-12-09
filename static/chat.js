@@ -76,12 +76,15 @@ function sendMessage() {
   });
 }
 
-function calculateReferenceBasedTextQuality() {
+function calculateReferenceBasedTextQuality(e) {
   const question = $('#user-input').val();
   if (question.trim() === "") { return; }  // Don't send an empty message
 
   const reference = $('#user-ref-input').val();
   if (reference.trim() === "") { return; }  // Don't send an empty message
+
+  // Scroll to the metrics table
+  scrollToMetricsTable(e)
 
   $.post({
     url: '/api/ref_metric',
@@ -96,6 +99,13 @@ function calculateReferenceBasedTextQuality() {
     metricsPollingInterval = setInterval(updateMetrics.bind(null, logID, true), 1000);
     updateMetrics(logID, true);  // So the table isn't empty for 1 second
   });
+}
+
+function scrollToMetricsTable(e) {
+  var tableTop = $('#metrics-table').offset().top;
+  $('html, body').animate({scrollTop: tableTop}, 500);
+
+  e.preventDefault();
 }
 
 function generateAnswerRow(answer, factualConsistencyScore, warning) {

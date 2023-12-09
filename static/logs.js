@@ -79,7 +79,7 @@ function loadLogs(direction) {
                                     </td>
                                     <td>${round(log.factual_consistency_openai, 4)}</td>
                                 </tr>
-                                <tr id="rouge1-metric"><td>rouge1</td><td>${round(log.rouge1, 4)}</td></tr>
+                                <tr><td>rouge1</td><td>${round(log.rouge1, 4)}</td></tr>
                                 <tr><td>rouge2</td><td>${round(log.rouge2, 4)}</td></tr>
                                 <tr><td>rougeL</td><td>${round(log.rougeL, 4)}</td></tr>
                                 <tr><td>semantic_similarity</td><td>${round(log.semantic_similarity, 4)}</td></tr>
