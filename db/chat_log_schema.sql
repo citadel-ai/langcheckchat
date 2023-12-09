@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS chat_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     request TEXT NOT NULL,
     response TEXT NOT NULL,
+    reference TEXT,
     timestamp TEXT NOT NULL,
     source TEXT NOT NULL,
     language TEXT NOT NULL,
@@ -29,5 +30,9 @@ CREATE TABLE IF NOT EXISTS chat_log (
     factual_consistency REAL,
     factual_consistency_openai REAL,
     factual_consistency_openai_explanation TEXT,
+    rouge1 REAL,
+    rouge2 REAL,
+    rougeL REAL,
+    semantic_similarity REAL,
     completed BOOLEAN default 0
 );

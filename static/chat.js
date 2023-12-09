@@ -11,6 +11,7 @@ if (document.location.pathname == '/demo') {
 }
 
 $('#send-button').click(sendMessage);
+$('#submit-ref-button').click(calculateReferenceBasedTextQuality);
 
 // Trigger send-button click event when Enter key is pressed
 $('#user-input').keypress(function (event) {
@@ -21,6 +22,9 @@ $('#user-input').keypress(function (event) {
 });
 
 $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
+
+// Global variable that tracks the current log id
+let logID;
 
 /*************************************************************************
 * Event handlers
@@ -34,6 +38,7 @@ function sendMessage() {
 
   // Show loading indicator
   $('#metrics-and-sources-container').hide();
+  $('#reference-input').hide();
   $('#chat-window').empty();
   $('#chat-window').show();
   $('#chat-window').append(`
@@ -59,12 +64,37 @@ function sendMessage() {
     $('#sources-table tbody pre').text(data.source);
     $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
 
+    // Save the log_id into the global variable
+    logID = data.id;
+
     // Poll metrics every second
     if (metricsPollingInterval !== undefined) {
       clearInterval(metricsPollingInterval);
     }
-    metricsPollingInterval = setInterval(updateMetrics.bind(null, data.id), 1000);
-    updateMetrics(data.id);  // So the table isn't empty for 1 second
+    metricsPollingInterval = setInterval(updateMetrics.bind(null, logID), 1000);
+    updateMetrics(logID);  // So the table isn't empty for 1 second
+  });
+}
+
+function calculateReferenceBasedTextQuality() {
+  const question = $('#user-input').val();
+  if (question.trim() === "") { return; }  // Don't send an empty message
+
+  const reference = $('#user-ref-input').val();
+  if (reference.trim() === "") { return; }  // Don't send an empty message
+
+  $.post({
+    url: '/api/ref_metric',
+    data: JSON.stringify({ log_id: logID, reference: reference }),
+    contentType: 'application/json;charset=UTF-8',
+    dataType: 'json',
+  }).then(function () {
+    // Poll metrics every second
+    if (metricsPollingInterval !== undefined) {
+      clearInterval(metricsPollingInterval);
+    }
+    metricsPollingInterval = setInterval(updateMetrics.bind(null, logID, true), 1000);
+    updateMetrics(logID, true);  // So the table isn't empty for 1 second
   });
 }
 
@@ -104,7 +134,14 @@ const METRICS_WITH_EXPLANATION = [
   'response_toxicity_openai',
   'factual_consistency_openai'
 ];
-function updateMetrics(id) {
+
+const REFERENCE_BASED_METRICS = [
+  'rouge1',
+  'rouge2',
+  'rougeL',
+  'semantic_similarity'
+];
+function updateMetrics(id, refBasedMetricsFlag) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
       $('#metrics-table tbody').empty();
@@ -113,7 +150,7 @@ function updateMetrics(id) {
           let value = data[metric] !== null ? data[metric] : '<div class="spinner-border spinner-border-sm"></div>';
           if (METRICS_WITH_EXPLANATION.includes(metric)) {
             $('#metrics-table tbody').append(`<tr><td id=${metric}>${metric}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
-          } else {
+          } else if(refBasedMetricsFlag || !REFERENCE_BASED_METRICS.includes(metric)) {
             $('#metrics-table tbody').append(`<tr><td>${metric}</td><td>${round(value, 4)}</td></tr>`);
           }
         }
@@ -122,6 +159,8 @@ function updateMetrics(id) {
       if (data.completed) {
         // Add OpenAI metrics explanation
         getMetricsExplanation(id);
+        // Show the reference text input
+        $('#reference-input').show();
         // Stop polling if metrics computation is completed
         clearInterval(metricsPollingInterval);
       }

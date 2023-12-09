@@ -86,8 +86,13 @@ thead.thead-dark {
   white-space: pre-wrap;
 }
 
-.form-control:focus {
+#user-input:focus {
   border-color: #28a745;
+  box-shadow: none;
+}
+
+#user-ref-input:focus {
+  border-color: #007bff;
   box-shadow: none;
 }
 

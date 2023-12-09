@@ -9,13 +9,15 @@ import langcheck
 import pytz
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
-from llama_index import (GPTVectorStoreIndex, ServiceContext,
-                         download_loader, set_global_service_context)
+from llama_index import (GPTVectorStoreIndex, ServiceContext, download_loader,
+                         set_global_service_context)
 from llama_index.embeddings import AzureOpenAIEmbedding
 from llama_index.llms import AzureOpenAI
 from llama_index.readers import SimpleWebPageReader, StringIterableReader
 
-from calculate_metrics import add_init_to_db, get_factual_consistency_score
+from calculate_metrics import (add_init_to_db,
+                               add_reference_based_metrics_to_db,
+                               get_factual_consistency_score)
 
 load_dotenv()
 
@@ -156,6 +158,12 @@ def chat():
                    source=source,
                    id=log_id)
 
+@app.route('/api/ref_metric', methods=['POST'])
+def get_reference_based_metric():
+    log_id = request.get_json().get('log_id', '')
+    reference_text = request.get_json().get('reference')
+    add_reference_based_metrics_to_db(int(log_id), reference_text)
+    return jsonify(success=True)
 
 def rag(user_message, language):
     '''Does Retrieval Augmented Generation to retrieve documents, generate the
@@ -231,7 +239,7 @@ def metrics_endpoint(log_id):
 
         # Fetch all column names
         cursor.execute('PRAGMA table_info(chat_log)')
-        cols_to_exclude = ["id", "timestamp", "request", "response", "source"]
+        cols_to_exclude = ["id", "timestamp", "request", "response", "source", "reference"]
         if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'False':
             cols_to_exclude += [
                 'request_toxicity', 'response_toxicity', 'request_sentiment',
