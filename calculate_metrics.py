@@ -4,15 +4,9 @@ import sys
 from typing import Optional, Tuple
 
 import langcheck.metrics
-import openai
 from dotenv import load_dotenv
 
 load_dotenv()
-
-openai.api_type = 'azure'
-openai.api_base = os.environ['AZURE_OPENAI_API_BASE']
-openai.api_version = os.environ['AZURE_OPENAI_API_VERSION']
-openai.api_key = os.environ['AZURE_OPENAI_API_KEY']
 
 DATABASE = 'db/langcheckchat.db'
 
@@ -21,7 +15,7 @@ def get_factual_consistency_score(
         source: str, response: str,
         language: str) -> Tuple[float, Optional[str]]:
     '''Get factual consistency score for a response given a source.'''
-    openai_args = {'engine': os.environ['AZURE_OPENAI_API_DEPLOYMENT']}
+    openai_args = {'model': os.environ['AZURE_OPENAI_API_DEPLOYMENT']}
     use_local = os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True'
     if use_local and language == 'ja':
         # TODO: Remove this once the problem is fixed in langcheck package
@@ -51,7 +45,7 @@ def get_factual_consistency_score(
 
     elif not use_local and language == 'ja':
         factual_consistency = langcheck.metrics.ja.factual_consistency(
-            response, source, model_type='openai', openai_args=openai_args)
+            response, source, model_type='azure_openai', openai_args=openai_args)
         # TODO: Gracefully handle the case where the score is None
         assert factual_consistency.metric_values[0] is not None
         # For type check
@@ -61,7 +55,7 @@ def get_factual_consistency_score(
     else:
         assert not use_local and language == 'en'
         factual_consistency = langcheck.metrics.factual_consistency(
-            response, source, model_type='openai', openai_args=openai_args)
+            response, source, model_type='azure_openai', openai_args=openai_args)
         # TODO: Gracefully handle the case where the score is None
         assert factual_consistency.metric_values[0] is not None
         # For type check
@@ -105,7 +99,7 @@ def add_metric_to_db(cursor,
                        (metric_value.metric_values[0], log_id))
     if openai_args:
         metric_value_openai = metric_fn(*metric_args,
-                                        model_type='openai',
+                                        model_type='azure_openai',
                                         openai_args=openai_args)
         cursor.execute(
             f"UPDATE chat_log SET {name}_openai = ?, {name}_openai_explanation = ? WHERE id = ?",
@@ -120,7 +114,7 @@ def main(log_id):
             'SELECT request, response, source, language FROM chat_log WHERE id = ?',
             (log_id, )).fetchone()
 
-    openai_args = {'engine': os.environ['AZURE_OPENAI_API_DEPLOYMENT']}
+    openai_args = {'model': os.environ['AZURE_OPENAI_API_DEPLOYMENT']}
     with sqlite3.connect(DATABASE, isolation_level=None) as conn:
         cursor = conn.cursor()
         if language == 'en':
@@ -130,7 +124,7 @@ def main(log_id):
                 factual_consistency_openai = langcheck.metrics.factual_consistency(
                     response,
                     source,
-                    model_type='openai',
+                    model_type='azure_openai',
                     openai_args=openai_args)
                 cursor.execute(
                     "UPDATE chat_log SET factual_consistency_openai = ?, factual_consistency_openai_explanation = ? WHERE id = ?",
@@ -181,7 +175,7 @@ def main(log_id):
                 factual_consistency_openai = langcheck.metrics.ja.factual_consistency(
                     response,
                     source,
-                    model_type='openai',
+                    model_type='azure_openai',
                     openai_args=openai_args)
                 cursor.execute(
                     "UPDATE chat_log SET factual_consistency_openai = ?, factual_consistency_openai_explanation = ? WHERE id = ?",
