@@ -39,6 +39,7 @@ function sendMessage() {
   // Show loading indicator
   $('#metrics-and-sources-container').hide();
   $('#reference-input').hide();
+  $("#submit-ref-button").prop("disabled", true);
   $('#chat-window').empty();
   $('#chat-window').show();
   $('#chat-window').append(`
@@ -60,6 +61,8 @@ function sendMessage() {
     // Append the bot's answer
     $('#metrics-and-sources-container').show();
     $('#spinner-container').remove();
+    $('#reference-input').show();
+    $("#submit-ref-button").prop("disabled", true);
     $('#chat-window').append(generateAnswerRow(data.response, data.score, data.warning));
     $('#sources-table tbody pre').text(data.source);
     $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
@@ -169,10 +172,10 @@ function updateMetrics(id, refBasedMetricsFlag) {
       if (data.completed) {
         // Add OpenAI metrics explanation
         getMetricsExplanation(id);
-        // Show the reference text input
-        $('#reference-input').show();
         // Stop polling if metrics computation is completed
         clearInterval(metricsPollingInterval);
+        // Enable the "Submit Reference" button
+        $("#submit-ref-button").prop("disabled", false);
       }
     });
 }
