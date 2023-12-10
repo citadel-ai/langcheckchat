@@ -80,9 +80,6 @@ function sendMessage() {
 }
 
 function calculateReferenceBasedTextQuality(e) {
-  const question = $('#user-input').val();
-  if (question.trim() === "") { return; }  // Don't send an empty message
-
   const reference = $('#user-ref-input').val();
   if (reference.trim() === "") { return; }  // Don't send an empty message
 
@@ -154,7 +151,7 @@ const REFERENCE_BASED_METRICS = [
   'rougeL',
   'semantic_similarity'
 ];
-function updateMetrics(id, refBasedMetricsFlag) {
+function updateMetrics(id, showRefBasedMetrics) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
       $('#metrics-table tbody').empty();
@@ -163,7 +160,7 @@ function updateMetrics(id, refBasedMetricsFlag) {
           let value = data[metric] !== null ? data[metric] : '<div class="spinner-border spinner-border-sm"></div>';
           if (METRICS_WITH_EXPLANATION.includes(metric)) {
             $('#metrics-table tbody').append(`<tr><td id=${metric}>${metric}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
-          } else if(refBasedMetricsFlag || !REFERENCE_BASED_METRICS.includes(metric)) {
+          } else if(showRefBasedMetrics || !REFERENCE_BASED_METRICS.includes(metric)) {
             $('#metrics-table tbody').append(`<tr><td>${metric}</td><td>${round(value, 4)}</td></tr>`);
           }
         }
