@@ -105,7 +105,7 @@ function calculateReferenceBasedTextQuality(e) {
     if (metricsPollingInterval !== undefined) {
       clearInterval(metricsPollingInterval);
     }
-    metricsPollingInterval = setInterval(updateMetrics.bind(null, logID, true), 1000);
+    metricsPollingInterval = setInterval(updateMetrics.bind(null, logID), 1000);
     updateMetrics(logID);  // So the table isn't empty for 1 second
   });
 }
