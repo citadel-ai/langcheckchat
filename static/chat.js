@@ -105,7 +105,7 @@ function calculateReferenceBasedTextQuality(e) {
       clearInterval(metricsPollingInterval);
     }
     metricsPollingInterval = setInterval(updateMetrics.bind(null, logID, true), 1000);
-    updateMetrics(logID, true);  // So the table isn't empty for 1 second
+    updateMetrics(logID);  // So the table isn't empty for 1 second
   });
 }
 
@@ -157,7 +157,7 @@ const REFERENCE_BASED_METRICS = [
   'rougeL',
   'semantic_similarity'
 ];
-function updateMetrics(id, showRefBasedMetrics) {
+function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
       $('#metrics-table tbody').empty();
@@ -166,7 +166,7 @@ function updateMetrics(id, showRefBasedMetrics) {
           let value = data[metric] !== null ? data[metric] : '<div class="spinner-border spinner-border-sm"></div>';
           if (METRICS_WITH_EXPLANATION.includes(metric)) {
             $('#metrics-table tbody').append(`<tr><td id=${metric}>${metric}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
-          } else if(showRefBasedMetrics || !REFERENCE_BASED_METRICS.includes(metric)) {
+          } else {
             $('#metrics-table tbody').append(`<tr><td>${metric}</td><td>${round(value, 4)}</td></tr>`);
           }
         }
@@ -177,6 +177,8 @@ function updateMetrics(id, showRefBasedMetrics) {
         getMetricsExplanation(id);
         // Stop polling if metrics computation is completed
         clearInterval(metricsPollingInterval);
+        // Remove the loading indicators, if any
+        $('#metrics-table .spinner-border').remove();
         // Enable the "Submit Reference" button
         $("#submit-ref-button").prop("disabled", false);
       }
