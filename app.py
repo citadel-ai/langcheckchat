@@ -162,11 +162,14 @@ def get_reference_based_metric():
     log_id = request.get_json().get('log_id', '')
     reference_text = request.get_json().get('reference')
 
-    # Update completed flag before calculating metrics
+    # Update the flag before updating the record. Additionally, initialize 
+    # the metrics with NULL so that the loading indicator works properly."
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
-        cursor.execute("UPDATE chat_log SET completed = 0 WHERE id = ?",
-                       (log_id, ))
+        cursor.execute('''
+            UPDATE chat_log 
+            SET completed = 0, rouge1 = NULL, rouge2 = NULL, rougeL = NULL, 
+                semantic_similarity = NULL WHERE id = ?''', (log_id, ))
     
     # Compute the metrics
     subprocess.Popen(["python", "calculate_reference_metrics.py", str(log_id), reference_text])
