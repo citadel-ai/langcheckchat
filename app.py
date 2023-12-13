@@ -158,12 +158,14 @@ def chat():
                    source=source,
                    id=log_id)
 
+
 @app.route('/api/ref_metric', methods=['POST'])
 def get_reference_based_metric():
     log_id = request.get_json().get('log_id', '')
     reference_text = request.get_json().get('reference')
     add_reference_based_metrics_to_db(int(log_id), reference_text)
     return jsonify(success=True)
+
 
 def rag(user_message, language):
     '''Does Retrieval Augmented Generation to retrieve documents, generate the
