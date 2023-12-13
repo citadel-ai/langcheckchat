@@ -20,6 +20,14 @@ $('#user-input').keypress(function (event) {
     sendMessage();
   }
 });
+$('#user-ref-input').keypress(function (event) {
+  if ($('#submit-ref-button').prop('disabled')) { return; }
+
+  if (event.which == 13) { // 13 is the Enter key's code
+    event.preventDefault(); // Prevents default action (like form submission)
+    calculateReferenceBasedTextQuality();
+  }
+});
 
 $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
 
@@ -104,8 +112,6 @@ function calculateReferenceBasedTextQuality(e) {
 function scrollToMetricsTable(e) {
   var tableTop = $('#metrics-table').offset().top;
   $('html, body').animate({scrollTop: tableTop}, 500);
-
-  e.preventDefault();
 }
 
 function generateAnswerRow(answer, factualConsistencyScore, warning) {
