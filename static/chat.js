@@ -3,6 +3,10 @@
 *************************************************************************/
 
 let metricsPollingInterval;
+let latestQuestion = {
+  questionId: null,
+  botId: null
+};
 
 $('#send-button').click(sendMessage);
 
@@ -52,12 +56,21 @@ function sendMessage() {
 
   // Get the user id
   $.get('/api/get_user_id').then(function (user_id) {
+    // Save the question id and bot type
+    latestQuestion.questionId = questionId;
+    latestQuestion.botId = $('input[name="botType"]:checked').val();
     $.post({
       url: '/api/chat',
       data: JSON.stringify({ id: questionId, botType: $('input[name="botType"]:checked').val(), user_id: user_id}),
       contentType: 'application/json;charset=UTF-8',
       dataType: 'json',
     }).then(function (data) {
+      // If another question is already fired, ignore this response
+      if (latestQuestion.questionId !== questionId || latestQuestion.botId !== $('input[name="botType"]:checked').val()) {
+        return;
+      }
+      // Make the chat window empty again just in case
+      $('#chat-window').empty();
       // Append the bot's answer
       $('#metrics-and-sources-container').show();
       $('#spinner-container').remove();
