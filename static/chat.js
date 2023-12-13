@@ -48,6 +48,7 @@ function sendMessage() {
   $('#metrics-and-sources-container').hide();
   $('#reference-input').hide();
   $("#submit-ref-button").prop("disabled", true);
+  $("#user-ref-input").val('');
   $('#chat-window').empty();
   $('#chat-window').show();
   $('#chat-window').append(`
