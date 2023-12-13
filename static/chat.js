@@ -50,25 +50,28 @@ function sendMessage() {
   $('#metrics-table tbody').empty();
   $('#sources-table tbody pre').empty();
 
-  $.post({
-    url: '/api/chat',
-    data: JSON.stringify({ id: questionId, botType: $('input[name="botType"]:checked').val() }),
-    contentType: 'application/json;charset=UTF-8',
-    dataType: 'json',
-  }).then(function (data) {
-    // Append the bot's answer
-    $('#metrics-and-sources-container').show();
-    $('#spinner-container').remove();
-    $('#chat-window').append(generateAnswerRow(data.response, data.score, data.warning));
-    $('#sources-table tbody pre').text(data.source);
-    $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
+  // Get the user id
+  $.get('/api/get_user_id').then(function (user_id) {
+    $.post({
+      url: '/api/chat',
+      data: JSON.stringify({ id: questionId, botType: $('input[name="botType"]:checked').val(), user_id: user_id}),
+      contentType: 'application/json;charset=UTF-8',
+      dataType: 'json',
+    }).then(function (data) {
+      // Append the bot's answer
+      $('#metrics-and-sources-container').show();
+      $('#spinner-container').remove();
+      $('#chat-window').append(generateAnswerRow(data.response, data.score, data.warning));
+      $('#sources-table tbody pre').text(data.source);
+      $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
 
-    // Poll metrics every second
-    if (metricsPollingInterval !== undefined) {
-      clearInterval(metricsPollingInterval);
-    }
-    metricsPollingInterval = setInterval(updateMetrics.bind(null, data.id), 1000);
-    updateMetrics(data.id);  // So the table isn't empty for 1 second
+      // Poll metrics every second
+      if (metricsPollingInterval !== undefined) {
+        clearInterval(metricsPollingInterval);
+      }
+      metricsPollingInterval = setInterval(updateMetrics.bind(null, data.id), 1000);
+      updateMetrics(data.id);  // So the table isn't empty for 1 second
+    });
   });
 }
 

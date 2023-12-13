@@ -5,6 +5,15 @@ import sys
 import langcheck.metrics
 from dotenv import load_dotenv
 import openai
+import signal
+
+
+def signal_handler(sig, frame):
+    print('Process terminated early')
+    sys.exit(0)
+
+
+signal.signal(signal.SIGTERM, signal_handler)
 
 load_dotenv()
 

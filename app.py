@@ -4,8 +4,10 @@ from datetime import datetime
 
 import pytz
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session
 from time import sleep
+import os
+import uuid
 
 EXAMPLE_Q_A = [
     {
@@ -103,6 +105,14 @@ def initialize_db():
 
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)
+
+
+@app.route('/api/get_user_id')
+def get_user_id():
+    if 'user_id' not in session:
+        session['user_id'] = str(uuid.uuid4())  # Assign a unique UUID
+    return session['user_id']
 
 
 @app.route('/', methods=['GET'])
@@ -110,9 +120,21 @@ def home():
     return app.send_static_file('index.html')
 
 
+# Dictionary to keep track of subprocesses for each user
+user_processes = {}
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    sleep(3)
+    user_id = request.json.get('user_id')  # Assuming each request contains a unique user_id
+    if not user_id:
+        return jsonify({"error": "User ID is required"}), 400
+
+    # Terminate the previous subprocess for this user, if it exists
+    if user_id in user_processes:
+        old_process = user_processes[user_id]
+        old_process.terminate()
+
     qa_id = int(request.get_json()['id'])
     # TODO: Add a flag for right/wrong
     used_bot = request.get_json()['botType']
@@ -134,8 +156,11 @@ def chat():
         log_id = cursor.lastrowid
         con.commit()
 
-    subprocess.Popen(["python", "calculate_metrics.py", str(log_id)])
+    new_process = subprocess.Popen(["python", "calculate_metrics.py", str(log_id)])
+    user_processes[user_id] = new_process
     warning = factual_consistency_score < 0.5
+
+    sleep(3)
 
     return jsonify(response=response_message,
                    score=factual_consistency_score,
