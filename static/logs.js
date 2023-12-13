@@ -13,7 +13,7 @@ function loadLogs(direction) {
                 `<tr>
                     <td>${log.request}</td>
                     <td>${log.response}</td>
-                    <td>${log.reference}</td>
+                    <td>${log.reference == null ? '' : log.reference}</td>
                     <td>
                         <table class="table table-bordered table-hover" id="metrics-table">
                             <thead class="thead-light">
