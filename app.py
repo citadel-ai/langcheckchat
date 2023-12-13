@@ -15,9 +15,7 @@ from llama_index.embeddings import AzureOpenAIEmbedding
 from llama_index.llms import AzureOpenAI
 from llama_index.readers import SimpleWebPageReader, StringIterableReader
 
-from calculate_metrics import (add_init_to_db,
-                               add_reference_based_metrics_to_db,
-                               get_factual_consistency_score)
+from calculate_metrics import add_init_to_db, get_factual_consistency_score
 
 load_dotenv()
 
@@ -163,7 +161,15 @@ def chat():
 def get_reference_based_metric():
     log_id = request.get_json().get('log_id', '')
     reference_text = request.get_json().get('reference')
-    add_reference_based_metrics_to_db(int(log_id), reference_text)
+
+    # Update completed flag before calculating metrics
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE chat_log SET completed = 0 WHERE id = ?",
+                       (log_id, ))
+    
+    # Compute the metrics
+    subprocess.Popen(["python", "calculate_reference_metrics.py", str(log_id), reference_text])
     return jsonify(success=True)
 
 
