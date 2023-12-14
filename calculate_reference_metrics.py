@@ -15,24 +15,29 @@ def main(log_id, reference):
             (log_id, )).fetchone()
     with sqlite3.connect(DATABASE, isolation_level=None) as conn:
         cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE chat_log SET completed = 0, reference = ? WHERE id = ?",
+            (reference, log_id))
         if language == 'en':
             add_metric_to_db(cursor, langcheck.metrics.rouge1,
-                            [response, reference, request], 'rouge1', log_id)
+                             [response, reference, request], 'rouge1', log_id)
             add_metric_to_db(cursor, langcheck.metrics.rouge2,
-                            [response, reference, request], 'rouge2', log_id)
+                             [response, reference, request], 'rouge2', log_id)
             add_metric_to_db(cursor, langcheck.metrics.rougeL,
-                            [response, reference, request], 'rougeL', log_id)
+                             [response, reference, request], 'rougeL', log_id)
             add_metric_to_db(cursor, langcheck.metrics.semantic_similarity,
-                            [response, reference, request], 'semantic_similarity', log_id)
+                             [response, reference, request],
+                             'semantic_similarity', log_id)
         else:
             add_metric_to_db(cursor, langcheck.metrics.ja.rouge1,
-                            [response, reference, request], 'rouge1', log_id)
+                             [response, reference, request], 'rouge1', log_id)
             add_metric_to_db(cursor, langcheck.metrics.ja.rouge2,
-                            [response, reference, request], 'rouge2', log_id)
+                             [response, reference, request], 'rouge2', log_id)
             add_metric_to_db(cursor, langcheck.metrics.ja.rougeL,
-                            [response, reference, request], 'rougeL', log_id)
+                             [response, reference, request], 'rougeL', log_id)
             add_metric_to_db(cursor, langcheck.metrics.ja.semantic_similarity,
-                            [response, reference, request], 'semantic_similarity', log_id)
+                             [response, reference, request],
+                             'semantic_similarity', log_id)
         cursor.execute("UPDATE chat_log SET completed = 1 WHERE id = ?",
                        (log_id, ))
 
