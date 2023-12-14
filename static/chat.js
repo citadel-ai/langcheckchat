@@ -47,7 +47,6 @@ function sendMessage() {
   // Show loading indicator
   $('#metrics-and-sources-container').hide();
   $('#reference-input').hide();
-  $("#submit-ref-button").prop("disabled", true);
   $("#user-ref-input").val('');
   $('#chat-window').empty();
   $('#chat-window').show();
@@ -71,7 +70,8 @@ function sendMessage() {
     $('#metrics-and-sources-container').show();
     $('#spinner-container').remove();
     $('#reference-input').show();
-    $("#submit-ref-button").prop("disabled", true);
+    $('#submit-ref-button').prop('disabled', true);
+    $('#submit-ref-button').tooltip({'trigger': 'hover'});
     $('#chat-window').append(generateAnswerRow(data.response, data.score, data.warning));
     $('#sources-table tbody pre').text(data.source);
     $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
@@ -181,7 +181,9 @@ function updateMetrics(id) {
         // Remove the loading indicators, if any
         $('#metrics-table .spinner-border').remove();
         // Enable the "Submit Reference" button
-        $("#submit-ref-button").prop("disabled", false);
+        $('#submit-ref-button').prop("disabled", false);
+        // Hide the tooktip for the "Submit Reference" button
+        $('#submit-ref-button').tooltip('dispose');
       }
     });
 }
@@ -194,7 +196,7 @@ function getMetricsExplanation(id) {
       if(metric.endsWith('_openai')) {
         $(`#${metric} svg`).attr('data-original-title', data[metric + '_explanation']);
         $('#metrics-table tbody svg').removeClass("d-none");
-        $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
+        $('#metrics-table [data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
       }
     }
   });
