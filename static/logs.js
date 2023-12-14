@@ -13,6 +13,7 @@ function loadLogs(direction) {
                 `<tr>
                     <td>${log.request}</td>
                     <td>${log.response}</td>
+                    <td>${log.reference == null ? '' : log.reference}</td>
                     <td>
                         <table class="table table-bordered table-hover" id="metrics-table">
                             <thead class="thead-light">
@@ -79,6 +80,10 @@ function loadLogs(direction) {
                                     </td>
                                     <td>${round(log.factual_consistency_openai, 4)}</td>
                                 </tr>
+                                <tr><td>rouge1</td><td>${round(log.rouge1, 4)}</td></tr>
+                                <tr><td>rouge2</td><td>${round(log.rouge2, 4)}</td></tr>
+                                <tr><td>rougeL</td><td>${round(log.rougeL, 4)}</td></tr>
+                                <tr><td>semantic_similarity</td><td>${round(log.semantic_similarity, 4)}</td></tr>
                             </tbody>
                         </table>
                     </td>

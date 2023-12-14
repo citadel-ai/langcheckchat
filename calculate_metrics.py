@@ -63,6 +63,36 @@ def get_factual_consistency_score(
         return factual_consistency.metric_values[
             0], factual_consistency.explanations[0]
 
+def add_reference_based_metrics_to_db(log_id: int, reference: str):
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        request, response, language = cursor.execute(
+            'SELECT request, response, language FROM chat_log WHERE id = ?',
+            (log_id, )).fetchone()
+    with sqlite3.connect(DATABASE, isolation_level=None) as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE chat_log SET completed = 0, reference = ? WHERE id = ?",
+                       (reference, log_id))
+        if language == 'en':
+            add_metric_to_db(cursor, langcheck.metrics.rouge1,
+                            [response, reference, request], 'rouge1', log_id)
+            add_metric_to_db(cursor, langcheck.metrics.rouge2,
+                            [response, reference, request], 'rouge2', log_id)
+            add_metric_to_db(cursor, langcheck.metrics.rougeL,
+                            [response, reference, request], 'rougeL', log_id)
+            add_metric_to_db(cursor, langcheck.metrics.semantic_similarity,
+                            [response, reference, request], 'semantic_similarity', log_id)
+        else:
+            add_metric_to_db(cursor, langcheck.metrics.ja.rouge1,
+                            [response, reference, request], 'rouge1', log_id)
+            add_metric_to_db(cursor, langcheck.metrics.ja.rouge2,
+                            [response, reference, request], 'rouge2', log_id)
+            add_metric_to_db(cursor, langcheck.metrics.ja.rougeL,
+                            [response, reference, request], 'rougeL', log_id)
+            add_metric_to_db(cursor, langcheck.metrics.ja.semantic_similarity,
+                            [response, reference, request], 'semantic_similarity', log_id)
+        cursor.execute("UPDATE chat_log SET completed = 1 WHERE id = ?",
+                       (log_id, ))
 
 def add_init_to_db(request, response, source, language, score, explanation,
                    timestamp) -> int:

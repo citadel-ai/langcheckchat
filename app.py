@@ -9,8 +9,8 @@ import langcheck
 import pytz
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
-from llama_index import (GPTVectorStoreIndex, ServiceContext,
-                         download_loader, set_global_service_context)
+from llama_index import (GPTVectorStoreIndex, ServiceContext, download_loader,
+                         set_global_service_context)
 from llama_index.embeddings import AzureOpenAIEmbedding
 from llama_index.llms import AzureOpenAI
 from llama_index.readers import SimpleWebPageReader, StringIterableReader
@@ -157,6 +157,25 @@ def chat():
                    id=log_id)
 
 
+@app.route('/api/ref_metric', methods=['POST'])
+def get_reference_based_metric():
+    log_id = request.get_json().get('log_id', '')
+    reference_text = request.get_json().get('reference')
+
+    # Update the flag before updating the record. Additionally, initialize 
+    # the metrics with NULL so that the loading indicator works properly."
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE chat_log 
+            SET completed = 0, rouge1 = NULL, rouge2 = NULL, rougeL = NULL, 
+                semantic_similarity = NULL WHERE id = ?''', (log_id, ))
+    
+    # Compute the metrics
+    subprocess.Popen(["python", "calculate_reference_metrics.py", str(log_id), reference_text])
+    return jsonify(success=True)
+
+
 def rag(user_message, language):
     '''Does Retrieval Augmented Generation to retrieve documents, generate the
     LLM's response with the documents as context, and compute the factual
@@ -231,7 +250,7 @@ def metrics_endpoint(log_id):
 
         # Fetch all column names
         cursor.execute('PRAGMA table_info(chat_log)')
-        cols_to_exclude = ["id", "timestamp", "request", "response", "source"]
+        cols_to_exclude = ["id", "timestamp", "request", "response", "source", "reference"]
         if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'False':
             cols_to_exclude += [
                 'request_toxicity', 'response_toxicity', 'request_sentiment',

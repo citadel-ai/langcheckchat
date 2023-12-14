@@ -11,6 +11,7 @@ if (document.location.pathname == '/demo') {
 }
 
 $('#send-button').click(sendMessage);
+$('#submit-ref-button').click(calculateReferenceBasedTextQuality);
 
 // Trigger send-button click event when Enter key is pressed
 $('#user-input').keypress(function (event) {
@@ -19,8 +20,19 @@ $('#user-input').keypress(function (event) {
     sendMessage();
   }
 });
+$('#user-ref-input').keypress(function (event) {
+  if ($('#submit-ref-button').prop('disabled')) { return; }
+
+  if (event.which == 13) { // 13 is the Enter key's code
+    event.preventDefault(); // Prevents default action (like form submission)
+    calculateReferenceBasedTextQuality();
+  }
+});
 
 $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
+
+// Global variable that tracks the current log id
+let logID;
 
 /*************************************************************************
 * Event handlers
@@ -34,6 +46,8 @@ function sendMessage() {
 
   // Show loading indicator
   $('#metrics-and-sources-container').hide();
+  $('#reference-input').hide();
+  $("#user-ref-input").val('');
   $('#chat-window').empty();
   $('#chat-window').show();
   $('#chat-window').append(`
@@ -55,17 +69,50 @@ function sendMessage() {
     // Append the bot's answer
     $('#metrics-and-sources-container').show();
     $('#spinner-container').remove();
+    $('#reference-input').show();
+    $('#submit-ref-button').prop('disabled', true);
+    $('#submit-ref-button').tooltip({'trigger': 'hover'});
     $('#chat-window').append(generateAnswerRow(data.response, data.score, data.warning));
     $('#sources-table tbody pre').text(data.source);
     $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
+
+    // Save the log_id into the global variable
+    logID = data.id;
 
     // Poll metrics every second
     if (metricsPollingInterval !== undefined) {
       clearInterval(metricsPollingInterval);
     }
-    metricsPollingInterval = setInterval(updateMetrics.bind(null, data.id), 1000);
-    updateMetrics(data.id);  // So the table isn't empty for 1 second
+    metricsPollingInterval = setInterval(updateMetrics.bind(null, logID), 1000);
+    updateMetrics(logID);  // So the table isn't empty for 1 second
   });
+}
+
+function calculateReferenceBasedTextQuality(e) {
+  const reference = $('#user-ref-input').val();
+  if (reference.trim() === "") { return; }  // Don't send an empty message
+
+  // Scroll to the metrics table
+  scrollToMetricsTable(e)
+
+  $.post({
+    url: '/api/ref_metric',
+    data: JSON.stringify({ log_id: logID, reference: reference }),
+    contentType: 'application/json;charset=UTF-8',
+    dataType: 'json',
+  }).then(function () {
+    // Poll metrics every second
+    if (metricsPollingInterval !== undefined) {
+      clearInterval(metricsPollingInterval);
+    }
+    metricsPollingInterval = setInterval(updateMetrics.bind(null, logID), 1000);
+    updateMetrics(logID);  // So the table isn't empty for 1 second
+  });
+}
+
+function scrollToMetricsTable(e) {
+  var tableTop = $('#metrics-table').offset().top;
+  $('html, body').animate({scrollTop: tableTop}, 500);
 }
 
 function generateAnswerRow(answer, factualConsistencyScore, warning) {
@@ -104,6 +151,13 @@ const METRICS_WITH_EXPLANATION = [
   'response_toxicity_openai',
   'factual_consistency_openai'
 ];
+
+const REFERENCE_BASED_METRICS = [
+  'rouge1',
+  'rouge2',
+  'rougeL',
+  'semantic_similarity'
+];
 function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
@@ -124,6 +178,12 @@ function updateMetrics(id) {
         getMetricsExplanation(id);
         // Stop polling if metrics computation is completed
         clearInterval(metricsPollingInterval);
+        // Remove the loading indicators, if any
+        $('#metrics-table .spinner-border').remove();
+        // Enable the "Submit Reference" button
+        $('#submit-ref-button').prop("disabled", false);
+        // Hide the tooktip for the "Submit Reference" button
+        $('#submit-ref-button').tooltip('dispose');
       }
     });
 }
@@ -136,7 +196,7 @@ function getMetricsExplanation(id) {
       if(metric.endsWith('_openai')) {
         $(`#${metric} svg`).attr('data-original-title', data[metric + '_explanation']);
         $('#metrics-table tbody svg').removeClass("d-none");
-        $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
+        $('#metrics-table [data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
       }
     }
   });
