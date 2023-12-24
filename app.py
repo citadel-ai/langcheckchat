@@ -1,6 +1,5 @@
 import os
 import pickle
-import sqlite3
 import subprocess
 from datetime import datetime
 from time import sleep
@@ -15,6 +14,7 @@ from llama_index.embeddings import AzureOpenAIEmbedding
 from llama_index.llms import AzureOpenAI
 from llama_index.readers import SimpleWebPageReader, StringIterableReader
 
+import database as db
 from calculate_metrics import add_init_to_db, get_factual_consistency_score
 
 load_dotenv()
@@ -92,25 +92,6 @@ service_context = ServiceContext.from_defaults(
 set_global_service_context(service_context)
 
 index = GPTVectorStoreIndex.from_documents(documents)
-
-
-def connect_db():
-    return sqlite3.connect(DATABASE)
-
-
-DATABASE = 'db/langcheckchat.db'
-
-
-def initialize_db():
-    with open('db/chat_log_schema.sql', 'r') as file:
-        sql_script = file.read()
-
-    with connect_db() as con:
-        cursor = con.cursor()
-        cursor.executescript(sql_script)
-        con.commit()
-
-
 app = Flask(__name__)
 
 
@@ -162,17 +143,15 @@ def get_reference_based_metric():
     log_id = request.get_json().get('log_id', '')
     reference_text = request.get_json().get('reference')
 
-    # Update the flag before updating the record. Additionally, initialize 
+    # Update the flag before updating the record. Additionally, initialize
     # the metrics with NULL so that the loading indicator works properly."
-    with sqlite3.connect(DATABASE) as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            UPDATE chat_log 
-            SET completed = 0, rouge1 = NULL, rouge2 = NULL, rougeL = NULL, 
-                semantic_similarity = NULL WHERE id = ?''', (log_id, ))
-    
+    db.update_chatlog_by_id(
+        { 'completed': 0, 'rouge1': None, 'rouge2': None,
+            'rougeL': None, 'semantic_similarity': None }, log_id)
+
     # Compute the metrics
-    subprocess.Popen(["python", "calculate_reference_metrics.py", str(log_id), reference_text])
+    subprocess.Popen(
+        ["python", "calculate_reference_metrics.py", str(log_id), reference_text])
     return jsonify(success=True)
 
 
@@ -229,59 +208,28 @@ def logs():
     page = int(request.args.get('page', 1))
     per_page = 10
     offset = (page - 1) * per_page
-
-    con = connect_db()
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    cur.execute(
-        'SELECT * FROM chat_log ORDER BY timestamp DESC LIMIT ? OFFSET ?',
-        (per_page, offset))
-
-    logs = [dict(row) for row in cur.fetchall()]
-    con.close()
-
-    return jsonify(logs=logs)
+    return jsonify(logs=db.get_chatlogs(per_page, offset))
 
 
 @app.route('/api/metrics/<log_id>', methods=['GET'])
 def metrics_endpoint(log_id):
-    with sqlite3.connect(DATABASE) as conn:
-        cursor = conn.cursor()
-
-        # Fetch all column names
-        cursor.execute('PRAGMA table_info(chat_log)')
-        cols_to_exclude = ["id", "timestamp", "request", "response", "source", "reference"]
-        if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'False':
-            cols_to_exclude += [
-                'request_toxicity', 'response_toxicity', 'request_sentiment',
-                'response_sentiment', 'request_fluency', 'response_fluency',
-                'factual_consistency'
-            ]
-
-        columns = [
-            col[1] for col in cursor.fetchall()
-            if col[1] not in cols_to_exclude
+    cols_to_exclude = ["id", "timestamp", "request",
+                       "response", "source", "reference"]
+    if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'False':
+        cols_to_exclude += [
+            'request_toxicity', 'response_toxicity', 'request_sentiment',
+            'response_sentiment', 'request_fluency', 'response_fluency',
+            'factual_consistency'
         ]
+    metrics_data = db.get_chatlog_by_id(log_id)
+    filtered_metrics_data = {
+        key: value for key, value in metrics_data.items() if key not in cols_to_exclude}
 
-        # Fetch the latest metrics
-        cursor.execute(
-            "SELECT {} FROM chat_log WHERE id = ?".format(", ".join(columns)),
-            (log_id, ))
-        data = cursor.fetchone()
-
-        if data is None:
-            return jsonify({"error": "No logs available"}), 400
-
-        metrics_data = dict(zip(columns, data))
-
-        cursor.execute("SELECT completed FROM chat_log WHERE id = ?",
-                       (log_id, ))
-        completed = cursor.fetchone()[0]
-
-        metrics_data["completed"] = completed
-        return jsonify(metrics_data)
+    if filtered_metrics_data is None:
+        return jsonify({"error": "No logs available"}), 400
+    return jsonify(filtered_metrics_data)
 
 
 if __name__ == '__main__':
-    initialize_db()
+    db.initialize_db()
     app.run(host='127.0.0.1', debug=True)
