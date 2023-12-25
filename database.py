@@ -8,10 +8,10 @@ def initialize_db():
     with open('db/chat_log_schema.sql', 'r') as file:
         sql_script = file.read()
 
-    conn = sqlite3.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.executescript(sql_script)
-    conn.commit()
+    with sqlite3.connect(DATABASE_URL) as conn:
+        cursor = conn.cursor()
+        cursor.executescript(sql_script)
+        conn.commit()
 
 
 def select_data(
@@ -38,7 +38,6 @@ def edit_data(
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute(query, params)
-        conn.commit()
         return cursor.lastrowid
 
 def get_chatlog_by_id(id: int) -> Dict[str, Any]:
