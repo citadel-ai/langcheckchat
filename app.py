@@ -143,11 +143,8 @@ def get_reference_based_metric():
     log_id = request.get_json().get('log_id', '')
     reference_text = request.get_json().get('reference')
 
-    # Update the flag before updating the record. Additionally, initialize
-    # the metrics with NULL so that the loading indicator works properly."
-    db.update_chatlog_by_id(
-        { 'completed': 0, 'rouge1': None, 'rouge2': None,
-            'rougeL': None, 'semantic_similarity': None }, log_id)
+    # Update the completed flag before updating the record
+    db.update_chatlog_by_id({'completed': 0}, log_id)
 
     # Compute the metrics
     subprocess.Popen(
