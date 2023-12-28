@@ -1,5 +1,5 @@
 import sqlite3
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 DATABASE_URL = 'db/langcheckchat.db'
 
@@ -14,10 +14,8 @@ def initialize_db():
         conn.commit()
 
 
-def _select_data(
-    query: str,
-    params: Optional[Dict[str, Any]] = None
-) -> List[sqlite3.Row]:
+def _select_data(query: str,
+                params: Optional[Dict[str, Any]] = None) -> List[sqlite3.Row]:
     '''Runs a SQL SELECT query on the SQLite database.
     '''
     if params is None:
@@ -29,10 +27,7 @@ def _select_data(
         return cursor.execute(query, params).fetchall()
 
 
-def _edit_data(
-    query: str,
-    params: Optional[List[Any]] = None
-) -> Optional[int]:
+def _edit_data(query: str, params: Optional[List[Any]] = None) -> Optional[int]:
     '''Runs a SQL INSERT or UPDATE query on the SQLite database.
     For a INSERT query, it returns the last inserted row id (lastrowid).
     '''
@@ -45,9 +40,10 @@ def _edit_data(
         cursor.execute(query, params)
         return cursor.lastrowid
 
+
 def get_chatlog_by_id(id: int) -> Dict[str, Any]:
     query = '''
-        SELECT * FROM chat_log 
+        SELECT * FROM chat_log
         WHERE id = :id
     '''
     chat_logs = _select_data(query, {'id': id})
@@ -58,8 +54,8 @@ def get_chatlog_by_id(id: int) -> Dict[str, Any]:
 
 def get_chatlogs(limit: int, offset: int) -> List[dict]:
     query = '''
-        SELECT * FROM chat_log 
-        ORDER BY timestamp 
+        SELECT * FROM chat_log
+        ORDER BY timestamp
         DESC LIMIT :limit OFFSET :offset
     '''
     chat_logs = _select_data(query, {'limit': limit, 'offset': offset})
