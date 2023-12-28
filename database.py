@@ -18,6 +18,8 @@ def _select_data(
     query: str,
     params: Optional[Dict[str, Any]] = None
 ) -> List[sqlite3.Row]:
+    '''Runs a SQL SELECT query on the SQLite database.
+    '''
     if params is None:
         params = {}
 
@@ -31,6 +33,9 @@ def _edit_data(
     query: str,
     params: Optional[List[Any]] = None
 ) -> Optional[int]:
+    '''Runs a SQL INSERT or UPDATE query on the SQLite database.
+    For a INSERT query, it returns the last inserted row id (lastrowid).
+    '''
     if params is None:
         params = []
 
