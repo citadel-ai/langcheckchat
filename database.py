@@ -38,7 +38,7 @@ def edit_data(query: str, params: Optional[List[Any]] = None) -> Optional[int]:
 
 def get_chatlog_by_id(id: int) -> Dict[str, Any]:
     query = '''
-        SELECT * FROM chat_log 
+        SELECT * FROM chat_log
         WHERE id = :id
     '''
     chat_logs = select_data(query, {'id': id})
@@ -49,8 +49,8 @@ def get_chatlog_by_id(id: int) -> Dict[str, Any]:
 
 def get_chatlogs(limit: int, offset: int) -> List[dict]:
     query = '''
-        SELECT * FROM chat_log 
-        ORDER BY timestamp 
+        SELECT * FROM chat_log
+        ORDER BY timestamp
         DESC LIMIT :limit OFFSET :offset
     '''
     chat_logs = select_data(query, {'limit': limit, 'offset': offset})
