@@ -1,5 +1,5 @@
 import sqlite3
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 DATABASE_URL = 'db/langcheckchat.db'
 
@@ -14,10 +14,8 @@ def initialize_db():
         conn.commit()
 
 
-def select_data(
-    query: str,
-    params: Optional[Dict[str, Any]] = None
-) -> List[sqlite3.Row]:
+def select_data(query: str,
+                params: Optional[Dict[str, Any]] = None) -> List[sqlite3.Row]:
     if params is None:
         params = {}
 
@@ -27,10 +25,7 @@ def select_data(
         return cursor.execute(query, params).fetchall()
 
 
-def edit_data(
-    query: str,
-    params: Optional[List[Any]] = None
-) -> Optional[int]:
+def edit_data(query: str, params: Optional[List[Any]] = None) -> Optional[int]:
     if params is None:
         params = []
 
@@ -39,6 +34,7 @@ def edit_data(
         cursor = conn.cursor()
         cursor.execute(query, params)
         return cursor.lastrowid
+
 
 def get_chatlog_by_id(id: int) -> Dict[str, Any]:
     query = '''
