@@ -63,34 +63,6 @@ def get_factual_consistency_score(
             0], factual_consistency.explanations[0]
 
 
-def add_reference_based_metrics_to_db(log_id: int, reference: str):
-    chatlog = db.get_chatlog_by_id(log_id)
-    request = chatlog['request']
-    response = chatlog['response']
-    language = chatlog['language']
-
-    db.update_chatlog_by_id({'completed': 0, 'reference': reference}, log_id)
-    if language == 'en':
-        add_metric_to_db(langcheck.metrics.rouge1,
-                         [response, reference, request], 'rouge1', log_id)
-        add_metric_to_db(langcheck.metrics.rouge2,
-                         [response, reference, request], 'rouge2', log_id)
-        add_metric_to_db(langcheck.metrics.rougeL,
-                         [response, reference, request], 'rougeL', log_id)
-        add_metric_to_db(langcheck.metrics.semantic_similarity,
-                         [response, reference, request], 'semantic_similarity', log_id)
-    else:
-        add_metric_to_db(langcheck.metrics.ja.rouge1,
-                         [response, reference, request], 'rouge1', log_id)
-        add_metric_to_db(langcheck.metrics.ja.rouge2,
-                         [response, reference, request], 'rouge2', log_id)
-        add_metric_to_db(langcheck.metrics.ja.rougeL,
-                         [response, reference, request], 'rougeL', log_id)
-        add_metric_to_db(langcheck.metrics.ja.semantic_similarity,
-                         [response, reference, request], 'semantic_similarity', log_id)
-    db.update_chatlog_by_id({'completed': 1}, log_id)
-
-
 def add_init_to_db(request, response, source, language, score, explanation,
                    timestamp) -> int:
     if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True':
