@@ -14,7 +14,7 @@ def initialize_db():
         conn.commit()
 
 
-def select_data(
+def _select_data(
     query: str,
     params: Optional[Dict[str, Any]] = None
 ) -> List[sqlite3.Row]:
@@ -45,7 +45,7 @@ def get_chatlog_by_id(id: int) -> Dict[str, Any]:
         SELECT * FROM chat_log 
         WHERE id = :id
     '''
-    chat_logs = select_data(query, {'id': id})
+    chat_logs = _select_data(query, {'id': id})
     if len(chat_logs) == 1:
         return dict(chat_logs[0])
     return {}
@@ -57,7 +57,7 @@ def get_chatlogs(limit: int, offset: int) -> List[dict]:
         ORDER BY timestamp 
         DESC LIMIT :limit OFFSET :offset
     '''
-    chat_logs = select_data(query, {'limit': limit, 'offset': offset})
+    chat_logs = _select_data(query, {'limit': limit, 'offset': offset})
     return [dict(chat_log) for chat_log in chat_logs]
 
 
