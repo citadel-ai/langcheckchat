@@ -61,18 +61,21 @@ def get_chatlogs(limit: int, offset: int) -> List[dict]:
     return [dict(chat_log) for chat_log in chat_logs]
 
 
-def insert_chatlog(data: Dict[str, Any]) -> Optional[int]:
+def insert_chatlog(data: Dict[str, Any]) -> int:
     columns = ', '.join(data.keys())
     placeholders = ', '.join(['?' for _ in data.keys()])
     query = f'''
         INSERT INTO chat_log ({columns}) VALUES ({placeholders})
     '''
-    return _edit_data(query, list(data.values()))
+    id = _edit_data(query, list(data.values()))
+    assert id is not None
+    return id
 
 
-def update_chatlog_by_id(data: Dict[str, Any], id) -> Optional[int]:
+def update_chatlog_by_id(data: Dict[str, Any], id) -> None:
     set_clause = ', '.join([f"{key} = ?" for key in data.keys()])
     query = f'''
         UPDATE chat_log SET {set_clause} WHERE id = {id}
     '''
-    return _edit_data(query, list(data.values()))
+    _edit_data(query, list(data.values()))
+    return
