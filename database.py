@@ -27,7 +27,7 @@ def _select_data(
         return cursor.execute(query, params).fetchall()
 
 
-def edit_data(
+def _edit_data(
     query: str,
     params: Optional[List[Any]] = None
 ) -> Optional[int]:
@@ -67,7 +67,7 @@ def insert_chatlog(data: Dict[str, Any]) -> Optional[int]:
     query = f'''
         INSERT INTO chat_log ({columns}) VALUES ({placeholders})
     '''
-    return edit_data(query, list(data.values()))
+    return _edit_data(query, list(data.values()))
 
 
 def update_chatlog_by_id(data: Dict[str, Any], id) -> Optional[int]:
@@ -75,4 +75,4 @@ def update_chatlog_by_id(data: Dict[str, Any], id) -> Optional[int]:
     query = f'''
         UPDATE chat_log SET {set_clause} WHERE id = {id}
     '''
-    return edit_data(query, list(data.values()))
+    return _edit_data(query, list(data.values()))
