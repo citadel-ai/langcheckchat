@@ -96,3 +96,18 @@ def insert_metric(log_id: int, metric_name: str, metric_value: float,
     '''
     _edit_data(query, [log_id, metric_name, metric_value, explanation])
     return
+
+
+def get_metrics_by_log_id(log_id: int) -> Dict[str, Dict[str, Any]]:
+    query = '''
+        SELECT * FROM metric
+        WHERE log_id = :log_id
+    '''
+    metrics = _select_data(query, {'log_id': log_id})
+    return {
+        metric['metric_name']: {
+            'metric_value': metric['metric_value'],
+            'explanation': metric['explanation']
+        }
+        for metric in metrics
+    }

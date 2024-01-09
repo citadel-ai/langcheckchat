@@ -147,8 +147,10 @@ def get_reference_based_metric():
     db.update_chatlog_by_id({'completed': 0}, log_id)
 
     # Compute the metrics
-    subprocess.Popen(
-        ["python", "calculate_reference_metrics.py", str(log_id), reference_text])
+    subprocess.Popen([
+        "python", "calculate_reference_metrics.py",
+        str(log_id), reference_text
+    ])
     return jsonify(success=True)
 
 
@@ -210,21 +212,10 @@ def logs():
 
 @app.route('/api/metrics/<log_id>', methods=['GET'])
 def metrics_endpoint(log_id):
-    cols_to_exclude = ["id", "timestamp", "request",
-                       "response", "source", "reference"]
-    if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'False':
-        cols_to_exclude += [
-            'request_toxicity', 'response_toxicity', 'request_sentiment',
-            'response_sentiment', 'request_fluency', 'response_fluency',
-            'factual_consistency'
-        ]
-    metrics_data = db.get_chatlog_by_id(log_id)
-    filtered_metrics_data = {
-        key: value for key, value in metrics_data.items() if key not in cols_to_exclude}
-
-    if filtered_metrics_data is None:
+    metrics_data = db.get_metrics_by_log_id(log_id)
+    if metrics_data is None:
         return jsonify({"error": "No logs available"}), 400
-    return jsonify(filtered_metrics_data)
+    return jsonify(metrics_data)
 
 
 if __name__ == '__main__':
