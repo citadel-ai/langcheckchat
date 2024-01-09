@@ -101,17 +101,14 @@ def add_metric_to_db(metric_fn, metric_args, name, log_id, openai_args=None):
     if os.environ[
             'ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True' or openai_args is None:
         metric_value = metric_fn(*metric_args)
-        db.update_chatlog_by_id({name: metric_value.metric_values[0]}, log_id)
+        db.insert_metric(log_id, name, metric_value.metric_values[0], None)
     if openai_args:
         metric_value_openai = metric_fn(*metric_args,
                                         model_type='azure_openai',
                                         openai_args=openai_args)
-        db.update_chatlog_by_id(
-            {
-                f"{name}_openai": metric_value_openai.metric_values[0],
-                f"{name}_openai_explanation":
-                metric_value_openai.explanations[0]
-            }, log_id)
+        db.insert_metric(log_id, f"{name}_openai",
+                         metric_value_openai.metric_values[0],
+                         metric_value_openai.explanations[0])
 
 
 def main(log_id):
@@ -131,13 +128,9 @@ def main(log_id):
                 source,
                 model_type='azure_openai',
                 openai_args=openai_args)
-            db.update_chatlog_by_id(
-                {
-                    'factual_consistency_openai':
-                    factual_consistency_openai.metric_values[0],
-                    'factual_consistency_openai_explanation':
-                    factual_consistency_openai.explanations[0]
-                }, log_id)
+            db.insert_metric(log_id, 'factual_consistency_openai',
+                             factual_consistency_openai.metric_values[0],
+                             factual_consistency_openai.explanations[0])
         add_metric_to_db(langcheck.metrics.toxicity, [request],
                          'request_toxicity',
                          log_id,
@@ -178,13 +171,9 @@ def main(log_id):
                 source,
                 model_type='azure_openai',
                 openai_args=openai_args)
-            db.update_chatlog_by_id(
-                {
-                    'factual_consistency_openai':
-                    factual_consistency_openai.metric_values[0],
-                    'factual_consistency_openai_explanation':
-                    factual_consistency_openai.explanations[0]
-                }, log_id)
+            db.insert_metric(log_id, 'factual_consistency_openai',
+                             factual_consistency_openai.metric_values[0],
+                             factual_consistency_openai.explanations[0])
         add_metric_to_db(langcheck.metrics.ja.toxicity, [request],
                          'request_toxicity',
                          log_id,
