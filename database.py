@@ -6,16 +6,19 @@ DATABASE_URL = 'db/langcheckchat.db'
 
 def initialize_db():
     with open('db/chat_log_schema.sql', 'r') as file:
-        sql_script = file.read()
+        chat_log_schema_script = file.read()
+    with open('db/metric_schema.sql', 'r') as file:
+        metric_schema_script = file.read()
 
     with sqlite3.connect(DATABASE_URL) as conn:
         cursor = conn.cursor()
-        cursor.executescript(sql_script)
+        cursor.executescript(chat_log_schema_script)
+        cursor.executescript(metric_schema_script)
         conn.commit()
 
 
 def _select_data(query: str,
-                params: Optional[Dict[str, Any]] = None) -> List[sqlite3.Row]:
+                 params: Optional[Dict[str, Any]] = None) -> List[sqlite3.Row]:
     '''Runs a SQL SELECT query on the SQLite database.
     '''
     if params is None:
@@ -27,7 +30,8 @@ def _select_data(query: str,
         return cursor.execute(query, params).fetchall()
 
 
-def _edit_data(query: str, params: Optional[List[Any]] = None) -> Optional[int]:
+def _edit_data(query: str,
+               params: Optional[List[Any]] = None) -> Optional[int]:
     '''Runs a SQL INSERT or UPDATE query on the SQLite database.
     For a INSERT query, it returns the last inserted row id (lastrowid).
     '''
