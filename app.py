@@ -214,7 +214,11 @@ def logs():
 def metrics_endpoint(log_id):
     metrics_data = db.get_metrics_by_log_id(log_id)
     if metrics_data is None:
-        return jsonify({"error": "No logs available"}), 400
+        return jsonify({"error": "No metrics available"}), 400
+    chatlog_data = db.get_chatlog_by_id(log_id)
+    if chatlog_data is None:
+        return jsonify({"error": "No chat logs available"}), 400
+    metrics_data['completed'] = chatlog_data['completed']
     return jsonify(metrics_data)
 
 

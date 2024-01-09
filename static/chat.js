@@ -163,6 +163,9 @@ function updateMetrics(id) {
     .then(function (data) {
       $('#metrics-table tbody').empty();
       for (let metricName in data) {
+        if (metricName === "completed") {
+          continue;
+        }
         let value = data[metricName]['metric_value'] !== null ? data[metricName]['metric_value'] : '<div class="spinner-border spinner-border-sm"></div>';
         if (METRICS_WITH_EXPLANATION.includes(metricName)) {
           $('#metrics-table tbody').append(`<tr><td id=${metricName}>${metricName}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
@@ -192,7 +195,7 @@ function getMetricsExplanation(id) {
   .then(function (data) {
     for (const metric in data) {
       if(metric.endsWith('_openai')) {
-        $(`#${metric} svg`).attr('data-original-title', data[metric + '_explanation']);
+        $(`#${metric} svg`).attr('data-original-title', data[metric]['explanation']);
         $('#metrics-table tbody svg').removeClass("d-none");
         $('#metrics-table [data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
       }

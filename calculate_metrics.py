@@ -118,7 +118,7 @@ def add_metrics_to_db(metrics_to_compute, chatlog, log_id):
         # First, add the metric name(s) to the database, but don't yet compute
         # the metric
         for metric_arg in metric_dict['compute_on']:
-            metric_name = f"{metric_dict['name']}_{metric_arg}"
+            metric_name = f"{metric_arg}_{metric_dict['name']}"
             if compute_local:
                 id = db.insert_metric(log_id, metric_name, None, None)
                 id_to_metric_fn[id] = {
