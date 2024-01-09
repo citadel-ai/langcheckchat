@@ -95,20 +95,36 @@ def add_init_to_db(request, response, source, language, score, explanation,
     return log_id
 
 
-def add_metric_to_db(metric_fn, metric_args, name, log_id, openai_args=None):
+def add_metric_to_db(metric_dict, chatlog, log_id):
     # Calculate the local metric if local metrics are enabled or if this metric
     # does not have an OpenAI version
-    if os.environ[
-            'ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True' or openai_args is None:
-        metric_value = metric_fn(*metric_args)
-        db.insert_metric(log_id, name, metric_value.metric_values[0], None)
-    if openai_args:
-        metric_value_openai = metric_fn(*metric_args,
-                                        model_type='azure_openai',
-                                        openai_args=openai_args)
-        db.insert_metric(log_id, f"{name}_openai",
-                         metric_value_openai.metric_values[0],
-                         metric_value_openai.explanations[0])
+    compute_local = os.environ[
+        'ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True' or not metric_dict[
+            'has_openai']
+
+    # Use the correct metric function depending on the language
+    if chatlog['language'] == 'en':
+        metric_fn = metric_dict['metric_fn']
+    else:
+        metric_fn = metric_dict['metric_fn_jp']
+
+    openai_args = {'model': os.environ['AZURE_OPENAI_API_DEPLOYMENT']}
+
+    for metric_arg in metric_dict['compute_on']:
+        metric_name = f"{metric_dict['name']}_{metric_arg}"
+        if compute_local:
+            metric_value = metric_fn(chatlog[metric_arg])
+            db.insert_metric(log_id, metric_name,
+                             metric_value.metric_values[0], None)
+
+        if metric_dict['has_openai']:
+            metric_value_openai = metric_fn(chatlog[metric_arg],
+                                            model_type='azure_openai',
+                                            openai_args=openai_args)
+            metric_name_openai = f"{metric_name}_openai"
+            db.insert_metric(log_id, metric_name_openai,
+                             metric_value_openai.metric_values[0],
+                             metric_value_openai.explanations[0])
 
 
 def main(log_id):
@@ -171,18 +187,7 @@ def main(log_id):
                              factual_consistency_openai.metric_values[0],
                              factual_consistency_openai.explanations[0])
         for metric in metrics_to_compute:
-            for metric_arg in metric['compute_on']:
-                metric_name = f"{metric['name']}_{metric_arg}"
-                if metric['has_openai']:
-                    add_metric_to_db(metric['metric_fn'],
-                                     [chatlog[metric_arg]],
-                                     metric_name,
-                                     log_id,
-                                     openai_args=openai_args)
-                else:
-                    add_metric_to_db(metric['metric_fn'],
-                                     [chatlog[metric_arg]], metric_name,
-                                     log_id)
+            add_metric_to_db(metric, chatlog, log_id)
     else:
         if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True':
             # If the local version of factual consistency was computed
@@ -196,18 +201,7 @@ def main(log_id):
                              factual_consistency_openai.metric_values[0],
                              factual_consistency_openai.explanations[0])
         for metric in metrics_to_compute:
-            for metric_arg in metric['compute_on']:
-                metric_name = f"{metric['name']}_{metric_arg}"
-                if metric['has_openai']:
-                    add_metric_to_db(metric['metric_fn_jp'],
-                                     [chatlog[metric_arg]],
-                                     metric_name,
-                                     log_id,
-                                     openai_args=openai_args)
-                else:
-                    add_metric_to_db(metric['metric_fn_jp'],
-                                     [chatlog[metric_arg]], metric_name,
-                                     log_id)
+            add_metric_to_db(metric, chatlog, log_id)
     db.update_chatlog_by_id({'completed': 1}, log_id)
 
 
