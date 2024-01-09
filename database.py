@@ -84,3 +84,15 @@ def update_chatlog_by_id(data: Dict[str, Any], id) -> None:
     '''
     _edit_data(query, list(data.values()))
     return
+
+
+def insert_metric(log_id: int, metric_name: str, metric_value: float,
+                  explanation: Optional[str]) -> None:
+    col_names = ['log_id', 'metric_name', 'metric_value', 'explanation']
+    columns = ', '.join(col_names)
+    placeholders = ', '.join(['?' for _ in col_names])
+    query = f'''
+        INSERT INTO metric ({columns}) VALUES ({placeholders})
+    '''
+    _edit_data(query, [log_id, metric_name, metric_value, explanation])
+    return

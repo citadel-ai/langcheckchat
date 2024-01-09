@@ -44,7 +44,10 @@ def get_factual_consistency_score(
 
     elif not use_local and language == 'ja':
         factual_consistency = langcheck.metrics.ja.factual_consistency(
-            response, source, model_type='azure_openai', openai_args=openai_args)
+            response,
+            source,
+            model_type='azure_openai',
+            openai_args=openai_args)
         # TODO: Gracefully handle the case where the score is None
         assert factual_consistency.metric_values[0] is not None
         # For type check
@@ -54,7 +57,10 @@ def get_factual_consistency_score(
     else:
         assert not use_local and language == 'en'
         factual_consistency = langcheck.metrics.factual_consistency(
-            response, source, model_type='azure_openai', openai_args=openai_args)
+            response,
+            source,
+            model_type='azure_openai',
+            openai_args=openai_args)
         # TODO: Gracefully handle the case where the score is None
         assert factual_consistency.metric_values[0] is not None
         # For type check
@@ -67,39 +73,45 @@ def add_init_to_db(request, response, source, language, score, explanation,
                    timestamp) -> int:
     if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True':
         log_id = db.insert_chatlog({
-            'request': request, 'response': response, 'source': source, 'language': language,
-            'factual_consistency': score, 'timestamp': timestamp
-        })
-    else:
-        log_id = db.insert_chatlog({
-            'request': request, 'response': response, 'source': source, 'language': language,
-            'factual_consistency_openai': score, 'factual_consistency_openai_explanation': explanation,
+            'request': request,
+            'response': response,
+            'source': source,
+            'language': language,
             'timestamp': timestamp
         })
+        db.insert_metric(log_id, 'factual_consistency', score, None)
+    else:
+        log_id = db.insert_chatlog({
+            'request': request,
+            'response': response,
+            'source': source,
+            'language': language,
+            'timestamp': timestamp
+        })
+        db.insert_metric(log_id, 'factual_consistency_openai', score,
+                         explanation)
     # For type check
     assert log_id is not None
     return log_id
 
 
-def add_metric_to_db(metric_fn,
-                     metric_args,
-                     name,
-                     log_id,
-                     openai_args=None):
+def add_metric_to_db(metric_fn, metric_args, name, log_id, openai_args=None):
     # Calculate the local metric if local metrics are enabled or if this metric
     # does not have an OpenAI version
     if os.environ[
             'ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True' or openai_args is None:
         metric_value = metric_fn(*metric_args)
-        db.update_chatlog_by_id(
-            {name: metric_value.metric_values[0]}, log_id)
+        db.update_chatlog_by_id({name: metric_value.metric_values[0]}, log_id)
     if openai_args:
         metric_value_openai = metric_fn(*metric_args,
                                         model_type='azure_openai',
                                         openai_args=openai_args)
         db.update_chatlog_by_id(
-            {f"{name}_openai": metric_value_openai.metric_values[0],
-             f"{name}_openai_explanation": metric_value_openai.explanations[0]}, log_id)
+            {
+                f"{name}_openai": metric_value_openai.metric_values[0],
+                f"{name}_openai_explanation":
+                metric_value_openai.explanations[0]
+            }, log_id)
 
 
 def main(log_id):
@@ -120,9 +132,12 @@ def main(log_id):
                 model_type='azure_openai',
                 openai_args=openai_args)
             db.update_chatlog_by_id(
-                {'factual_consistency_openai': factual_consistency_openai.metric_values[0],
-                 'factual_consistency_openai_explanation': factual_consistency_openai.explanations[0]
-                 }, log_id)
+                {
+                    'factual_consistency_openai':
+                    factual_consistency_openai.metric_values[0],
+                    'factual_consistency_openai_explanation':
+                    factual_consistency_openai.explanations[0]
+                }, log_id)
         add_metric_to_db(langcheck.metrics.toxicity, [request],
                          'request_toxicity',
                          log_id,
@@ -135,8 +150,8 @@ def main(log_id):
                          'request_fluency',
                          log_id,
                          openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.flesch_reading_ease,
-                         [request], 'request_readability', log_id)
+        add_metric_to_db(langcheck.metrics.flesch_reading_ease, [request],
+                         'request_readability', log_id)
 
         add_metric_to_db(langcheck.metrics.toxicity, [response],
                          'response_toxicity',
@@ -150,8 +165,8 @@ def main(log_id):
                          'response_fluency',
                          log_id,
                          openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.flesch_reading_ease,
-                         [response], 'response_readability', log_id)
+        add_metric_to_db(langcheck.metrics.flesch_reading_ease, [response],
+                         'response_readability', log_id)
         add_metric_to_db(langcheck.metrics.ai_disclaimer_similarity,
                          [response], 'ai_disclaimer_similarity', log_id)
     else:
@@ -164,9 +179,12 @@ def main(log_id):
                 model_type='azure_openai',
                 openai_args=openai_args)
             db.update_chatlog_by_id(
-                {'factual_consistency_openai': factual_consistency_openai.metric_values[0],
-                 'factual_consistency_openai_explanation': factual_consistency_openai.explanations[0]},
-                log_id)
+                {
+                    'factual_consistency_openai':
+                    factual_consistency_openai.metric_values[0],
+                    'factual_consistency_openai_explanation':
+                    factual_consistency_openai.explanations[0]
+                }, log_id)
         add_metric_to_db(langcheck.metrics.ja.toxicity, [request],
                          'request_toxicity',
                          log_id,
