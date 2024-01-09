@@ -163,7 +163,7 @@ function updateMetrics(id) {
     .then(function (data) {
       $('#metrics-table tbody').empty();
       for (let metricName in data) {
-        let value = data[metricName] !== null ? data[metricName]['metric_value'] : '<div class="spinner-border spinner-border-sm"></div>';
+        let value = data[metricName]['metric_value'] !== null ? data[metricName]['metric_value'] : '<div class="spinner-border spinner-border-sm"></div>';
         if (METRICS_WITH_EXPLANATION.includes(metricName)) {
           $('#metrics-table tbody').append(`<tr><td id=${metricName}>${metricName}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
         } else {
