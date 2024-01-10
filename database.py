@@ -58,12 +58,34 @@ def get_chatlog_by_id(id: int) -> Dict[str, Any]:
 
 def get_chatlogs(limit: int, offset: int) -> List[dict]:
     query = '''
-        SELECT * FROM chat_log
-        ORDER BY timestamp
-        DESC LIMIT :limit OFFSET :offset
+        SELECT chat_log.*, metric.metric_name, metric.metric_value, metric.explanation
+        FROM (
+            SELECT * FROM chat_log
+            ORDER BY timestamp DESC
+            LIMIT :limit OFFSET :offset
+        ) AS chat_log
+        LEFT JOIN metric ON chat_log.id = metric.log_id
     '''
-    chat_logs = _select_data(query, {'limit': limit, 'offset': offset})
-    return [dict(chat_log) for chat_log in chat_logs]
+    all_logs = _select_data(query, {'limit': limit, 'offset': offset})
+    metric_columns = ['metric_name', 'metric_value', 'explanation']
+
+    # Each row in all_logs corresponds to a single metric. We want to group
+    # together all the metrics for a single chat log.
+    id_to_logs = {}
+    for log in all_logs:
+        id = log['id']
+        if id not in id_to_logs:
+            chat_log = {
+                k: log[k]
+                for k in log.keys() if k not in metric_columns
+            }
+            id_to_logs[id] = chat_log
+            id_to_logs[id]['metrics'] = {}
+        id_to_logs[id]['metrics'][log['metric_name']] = {
+            'metric_value': log['metric_value'],
+            'explanation': log['explanation']
+        }
+    return list(id_to_logs.values())
 
 
 def insert_chatlog(data: Dict[str, Any]) -> int:
