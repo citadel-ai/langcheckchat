@@ -56,7 +56,7 @@ def get_chatlog_by_id(id: int) -> Dict[str, Any]:
     return {}
 
 
-def get_chatlogs(limit: int, offset: int) -> List[dict]:
+def get_chatlogs_and_metrics(limit: int, offset: int) -> List[dict]:
     query = '''
         SELECT chat_log.*, metric.metric_name, metric.metric_value, metric.explanation
         FROM (

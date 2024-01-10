@@ -207,7 +207,7 @@ def logs():
     page = int(request.args.get('page', 1))
     per_page = 10
     offset = (page - 1) * per_page
-    return jsonify(logs=db.get_chatlogs(per_page, offset))
+    return jsonify(logs=db.get_chatlogs_and_metrics(per_page, offset))
 
 
 @app.route('/api/metrics/<log_id>', methods=['GET'])
