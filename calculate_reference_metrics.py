@@ -11,7 +11,7 @@ def main(log_id, reference):
     request = chatlog['request']
     response = chatlog['response']
     language = chatlog['language']
-    db.update_chatlog_by_id({'completed': 0, 'reference': reference}, log_id)
+    db.update_chatlog_by_id({'status': 'new', 'reference': reference}, log_id)
 
     metrics_to_compute = [
         Metric('rouge1', langcheck.metrics.rouge1, langcheck.metrics.ja.rouge1,
@@ -33,7 +33,7 @@ def main(log_id, reference):
     for metric in metrics_to_compute:
         metric.compute_metrics_and_update_db(language)
 
-    db.update_chatlog_by_id({'completed': 1}, log_id)
+    db.update_chatlog_by_id({'status': 'done'}, log_id)
 
 
 if __name__ == '__main__':

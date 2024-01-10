@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS chat_log (
     timestamp TEXT NOT NULL,
     source TEXT NOT NULL,
     language TEXT NOT NULL,
-    completed BOOLEAN default 0
+    status TEXT default 'new'  /* new, pending, done */
 );

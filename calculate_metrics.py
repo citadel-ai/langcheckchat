@@ -192,7 +192,7 @@ def main(log_id):
     for metric in metrics_to_compute:
         metric.compute_metrics_and_update_db(language)
 
-    db.update_chatlog_by_id({'completed': 1}, log_id)
+    db.update_chatlog_by_id({'status': 'done'}, log_id)
 
 
 if __name__ == '__main__':

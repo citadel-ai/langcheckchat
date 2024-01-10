@@ -143,8 +143,8 @@ def get_reference_based_metric():
     log_id = request.get_json().get('log_id', '')
     reference_text = request.get_json().get('reference')
 
-    # Update the completed flag before updating the record
-    db.update_chatlog_by_id({'completed': 0}, log_id)
+    # Update the status before updating the record
+    db.update_chatlog_by_id({'status': 'new'}, log_id)
 
     # Compute the metrics
     subprocess.Popen([
@@ -218,7 +218,7 @@ def metrics_endpoint(log_id):
     chatlog_data = db.get_chatlog_by_id(log_id)
     if chatlog_data is None:
         return jsonify({"error": "No chat logs available"}), 400
-    metrics_data['completed'] = chatlog_data['completed']
+    metrics_data['status'] = chatlog_data['status']
     return jsonify(metrics_data)
 
 

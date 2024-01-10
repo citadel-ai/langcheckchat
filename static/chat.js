@@ -163,7 +163,7 @@ function updateMetrics(id) {
     .then(function (data) {
       $('#metrics-table tbody').empty();
       for (let metricName in data) {
-        if (metricName === "completed") {
+        if (metricName === "status") {
           continue;
         }
         let value = data[metricName]['metric_value'] !== null ? data[metricName]['metric_value'] : '<div class="spinner-border spinner-border-sm"></div>';
@@ -174,10 +174,10 @@ function updateMetrics(id) {
         }
       }
 
-      if (data.completed) {
+      if (data.status === 'done') {
         // Add OpenAI metrics explanation
         getMetricsExplanation(id);
-        // Stop polling if metrics computation is completed
+        // Stop polling if metrics computation is done
         clearInterval(metricsPollingInterval);
         // Remove the loading indicators, if any
         $('#metrics-table .spinner-border').remove();
