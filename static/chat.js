@@ -162,6 +162,11 @@ function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
       $('#metrics-table tbody').empty();
+      // Add a row with a spinner if the status is still "new"
+      if (data.status === 'new') {
+        $('#metrics-table tbody').append(`<tr><td colspan="2" style="text-align: center;"><div class="spinner-border spinner-border-sm"></div></td></tr>`);
+        return;
+      }
       for (let metricName in data) {
         if (metricName === "status") {
           continue;
