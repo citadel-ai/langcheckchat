@@ -13,20 +13,17 @@ def main(log_id, reference):
     language = chatlog['language']
     db.update_chatlog_by_id({'completed': 0, 'reference': reference}, log_id)
 
-    metrics_to_compute = []
-    metrics_to_compute.append(
+    metrics_to_compute = [
         Metric('rouge1', langcheck.metrics.rouge1, langcheck.metrics.ja.rouge1,
-               [response, reference, request], True, False))
-    metrics_to_compute.append(
+               [response, reference, request], True, False),
         Metric('rouge2', langcheck.metrics.rouge2, langcheck.metrics.ja.rouge2,
-               [response, reference, request], True, False))
-    metrics_to_compute.append(
+               [response, reference, request], True, False),
         Metric('rougeL', langcheck.metrics.rougeL, langcheck.metrics.ja.rougeL,
-               [response, reference, request], True, False))
-    metrics_to_compute.append(
+               [response, reference, request], True, False),
         Metric('semantic_similarity', langcheck.metrics.semantic_similarity,
                langcheck.metrics.ja.semantic_similarity,
-               [response, reference, request], True, False))
+               [response, reference, request], True, False)
+    ]
 
     # First, add the metric names to the database, but don't yet compute the
     # metrics
