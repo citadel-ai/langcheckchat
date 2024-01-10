@@ -9,83 +9,40 @@ function loadLogs(direction) {
     $('#qa-table tr:not(:first)').remove();  // Remove all rows except headers
     $.get('/api/logs?page=' + currentPage, function(data) {
         data.logs.forEach(log => {
+            // Construct the rows of the metrics table. `log` has a field
+            // `metrics` which is a JSON object with the metric names as keys
+            // and their values as
+            // {'metric_value': value, 'explanation': explanation}. We iterate
+            // over this object and construct the rows of the table.
+            const metricRows = Object.entries(log.metrics).map(([metricName, metricData]) => {
+              if (metricData.explanation !== null) {
+                return `<tr>
+                          <td id=${metricName}>${metricName}<span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${metricData.explanation.replace(/"/g, "'")}"></td>
+                          <td>${round(metricData.metric_value, 4)}</td>
+                        </tr>`;
+              } else {
+                return `<tr><td>${metricName}</td><td>${round(metricData.metric_value, 4)}</td></tr>`;
+              }
+            });
+            const metricsTable = `<table class="table table-bordered table-hover" id="metrics-table">
+                                    <thead class="thead-light">
+                                      <tr>
+                                        <th>Metric</th>
+                                        <th>Value</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody class="text-monospace">
+                                      ${metricRows.join('')}
+                                    </tbody>
+                                  </table>`;
+
             $('#qa-table').append(
                 `<tr>
                     <td>${log.request}</td>
                     <td>${log.response}</td>
                     <td>${log.reference == null ? '' : log.reference}</td>
                     <td>
-                        <table class="table table-bordered table-hover" id="metrics-table">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>Metric</th>
-                                    <th>Value</th>
-                                </tr>
-                                </thead>
-                            <tbody class="text-monospace">
-                                <tr><td>request_toxicity</td><td>${round(log.request_toxicity, 4)}</td></tr>
-                                <tr>
-                                    <td class="d-flex align-items-center">
-                                        <span>request_toxicity_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.request_toxicity_openai_explanation.replace(/"/g, "'")}">
-                                    </td>
-                                    <td>${round(log.request_toxicity_openai, 4)}</td></tr>
-                                <tr><td>request_sentiment</td><td>${round(log.request_sentiment, 4)}</td></tr>
-                                <tr>
-                                    <td class="d-flex align-items-center">
-                                        <span>request_sentiment_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.request_sentiment_openai_explanation.replace(/"/g, "'")}">
-                                    </td>
-                                    <td>${round(log.request_sentiment_openai, 4)}</td>
-                                </tr>
-                                <tr><td>request_fluency</td><td>${round(log.request_fluency, 4)}</td></tr>
-                                <tr>
-                                    <td class="d-flex align-items-center">
-                                        <span>request_fluency_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.request_fluency_openai_explanation.replace(/"/g, "'")}">
-                                    </td>
-                                    <td>${round(log.request_fluency_openai, 4)}</td>
-                                </tr>
-                                <tr><td>response_toxicity</td><td>${round(log.response_toxicity, 4)}</td></tr>
-                                <tr>
-                                    <td class="d-flex align-items-center">
-                                        <span>response_toxicity_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.response_toxicity_openai_explanation.replace(/"/g, "'")}">
-                                    </td>
-                                    <td>${round(log.response_toxicity_openai, 4)}</td>
-                                </tr>
-                                <tr><td>response_sentiment</td><td>${round(log.response_sentiment, 4)}</td></tr>
-                                <tr>
-                                    <td class="d-flex align-items-center">
-                                        <span>response_sentiment_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.response_sentiment_openai_explanation.replace(/"/g, "'")}">
-                                    </td>
-                                    <td>${round(log.response_sentiment_openai, 4)}</td>
-                                </tr>
-                                <tr><td>response_fluency</td><td>${round(log.response_fluency, 4)}</td></tr>
-                                <tr>
-                                    <td class="d-flex align-items-center">
-                                        <span>response_fluency_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.response_fluency_openai_explanation.replace(/"/g, "'")}">
-                                    </td>
-                                    <td>${round(log.response_fluency_openai, 4)}</td>
-                                </tr>
-                                <tr><td>response_readability</td><td>${round(log.response_readability, 4)}</td></tr>
-                                <tr><td>ai_disclaimer_similarity</td><td>${round(log.ai_disclaimer_similarity, 4)}</td></tr>
-                                <tr><td>factual_consistency</td><td>${round(log.factual_consistency, 4)}</td></tr>
-                                <tr>
-                                    <td class="d-flex align-items-center">
-                                        <span>factual_consistency_openai</span>
-                                        <span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${log.factual_consistency_openai_explanation.replace(/"/g, "'")}">
-                                    </td>
-                                    <td>${round(log.factual_consistency_openai, 4)}</td>
-                                </tr>
-                                <tr><td>rouge1</td><td>${round(log.rouge1, 4)}</td></tr>
-                                <tr><td>rouge2</td><td>${round(log.rouge2, 4)}</td></tr>
-                                <tr><td>rougeL</td><td>${round(log.rougeL, 4)}</td></tr>
-                                <tr><td>semantic_similarity</td><td>${round(log.semantic_similarity, 4)}</td></tr>
-                            </tbody>
-                        </table>
+                        ${metricsTable}
                     </td>
                     <td>
                         <div class="d-flex justify-content-between">
