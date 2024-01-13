@@ -206,6 +206,8 @@ function updateMetrics(id) {
         } else if (REFERENCE_BASED_METRICS.includes(metricName)) {
           metricTableID = '#referebce-based-metrics-table';
           $('#reference-based-metrics-container').show();
+        } else {
+          continue;
         }
         if (METRICS_WITH_EXPLANATION.includes(metricName)) {
           $(metricTableID + ' tbody').append(`<tr><td id=${metricName}>${metricName}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
