@@ -44,7 +44,10 @@ def get_factual_consistency_score(
 
     elif not use_local and language == 'ja':
         factual_consistency = langcheck.metrics.ja.factual_consistency(
-            response, source, model_type='azure_openai', openai_args=openai_args)
+            response,
+            source,
+            model_type='azure_openai',
+            openai_args=openai_args)
         # TODO: Gracefully handle the case where the score is None
         assert factual_consistency.metric_values[0] is not None
         # For type check
@@ -54,7 +57,10 @@ def get_factual_consistency_score(
     else:
         assert not use_local and language == 'en'
         factual_consistency = langcheck.metrics.factual_consistency(
-            response, source, model_type='azure_openai', openai_args=openai_args)
+            response,
+            source,
+            model_type='azure_openai',
+            openai_args=openai_args)
         # TODO: Gracefully handle the case where the score is None
         assert factual_consistency.metric_values[0] is not None
         # For type check
@@ -67,39 +73,65 @@ def add_init_to_db(request, response, source, language, score, explanation,
                    timestamp) -> int:
     if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True':
         log_id = db.insert_chatlog({
-            'request': request, 'response': response, 'source': source, 'language': language,
-            'factual_consistency': score, 'timestamp': timestamp
-        })
-    else:
-        log_id = db.insert_chatlog({
-            'request': request, 'response': response, 'source': source, 'language': language,
-            'factual_consistency_openai': score, 'factual_consistency_openai_explanation': explanation,
+            'request': request,
+            'response': response,
+            'source': source,
+            'language': language,
             'timestamp': timestamp
         })
+        db.insert_metric(log_id, 'factual_consistency', score, None)
+    else:
+        log_id = db.insert_chatlog({
+            'request': request,
+            'response': response,
+            'source': source,
+            'language': language,
+            'timestamp': timestamp
+        })
+        db.insert_metric(log_id, 'factual_consistency_openai', score,
+                         explanation)
     # For type check
     assert log_id is not None
     return log_id
 
 
-def add_metric_to_db(metric_fn,
-                     metric_args,
-                     name,
-                     log_id,
-                     openai_args=None):
-    # Calculate the local metric if local metrics are enabled or if this metric
-    # does not have an OpenAI version
-    if os.environ[
-            'ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True' or openai_args is None:
-        metric_value = metric_fn(*metric_args)
-        db.update_chatlog_by_id(
-            {name: metric_value.metric_values[0]}, log_id)
-    if openai_args:
-        metric_value_openai = metric_fn(*metric_args,
-                                        model_type='azure_openai',
-                                        openai_args=openai_args)
-        db.update_chatlog_by_id(
-            {f"{name}_openai": metric_value_openai.metric_values[0],
-             f"{name}_openai_explanation": metric_value_openai.explanations[0]}, log_id)
+class Metric:
+
+    def __init__(self, metric_name, metric_fn, metric_fn_jp, args,
+                 compute_local, compute_openai):
+        self.metric_name = metric_name
+        self.metric_fn = metric_fn
+        self.metric_fn_jp = metric_fn_jp
+        self.args = args
+        self.compute_local = compute_local
+        self.compute_openai = compute_openai
+        assert self.compute_local or self.compute_openai, \
+            "At least one of compute_local and compute_openai must be True"
+        self.local_metric_id = None
+        self.openai_metric_id = None
+
+    def insert_metric_names_to_db(self, log_id):
+        if self.compute_local:
+            self.local_metric_id = db.insert_metric(log_id, self.metric_name,
+                                                    None, None)
+        if self.compute_openai:
+            self.openai_metric_id = db.insert_metric(
+                log_id, f"{self.metric_name}_openai", None, None)
+
+    def compute_metrics_and_update_db(self, language):
+        metric_fn = self.metric_fn if language == 'en' else self.metric_fn_jp
+        if self.local_metric_id is not None:
+            metric_result = metric_fn(*self.args)
+            db.update_metric_by_id(metric_result.metric_values[0], None,
+                                   self.local_metric_id)
+        if self.openai_metric_id is not None:
+            openai_args = {'model': os.environ['AZURE_OPENAI_API_DEPLOYMENT']}
+            metric_result = metric_fn(*self.args,
+                                      model_type='azure_openai',
+                                      openai_args=openai_args)
+            db.update_metric_by_id(metric_result.metric_values[0],
+                                   metric_result.explanations[0],
+                                   self.openai_metric_id)
 
 
 def main(log_id):
@@ -109,97 +141,59 @@ def main(log_id):
     source = chatlog['source']
     language = chatlog['language']
 
-    openai_args = {'model': os.environ['AZURE_OPENAI_API_DEPLOYMENT']}
-    if language == 'en':
-        if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True':
-            # If the local version of factual consistency was computed
-            # first, we compute the OpenAI version here
-            factual_consistency_openai = langcheck.metrics.factual_consistency(
-                response,
-                source,
-                model_type='azure_openai',
-                openai_args=openai_args)
-            db.update_chatlog_by_id(
-                {'factual_consistency_openai': factual_consistency_openai.metric_values[0],
-                 'factual_consistency_openai_explanation': factual_consistency_openai.explanations[0]
-                 }, log_id)
-        add_metric_to_db(langcheck.metrics.toxicity, [request],
-                         'request_toxicity',
-                         log_id,
-                         openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.sentiment, [request],
-                         'request_sentiment',
-                         log_id,
-                         openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.fluency, [request],
-                         'request_fluency',
-                         log_id,
-                         openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.flesch_reading_ease,
-                         [request], 'request_readability', log_id)
+    metrics_to_compute = []
+    enable_local = os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True'
+    if enable_local:
+        # If the local version of factual consistency was computed first, we
+        # need to now compute the OpenAI version
+        metrics_to_compute.append(
+            Metric('factual_consistency',
+                   langcheck.metrics.factual_consistency,
+                   langcheck.metrics.ja.factual_consistency,
+                   [response, source], False, True))
+    metrics_to_compute.append(
+        Metric('request_toxicity', langcheck.metrics.toxicity,
+               langcheck.metrics.ja.toxicity, [request], enable_local, True))
+    metrics_to_compute.append(
+        Metric('response_toxicity', langcheck.metrics.toxicity,
+               langcheck.metrics.ja.toxicity, [response], enable_local, True))
+    metrics_to_compute.append(
+        Metric('request_sentiment', langcheck.metrics.sentiment,
+               langcheck.metrics.ja.sentiment, [request], enable_local, True))
+    metrics_to_compute.append(
+        Metric('response_sentiment', langcheck.metrics.sentiment,
+               langcheck.metrics.ja.sentiment, [response], enable_local, True))
+    metrics_to_compute.append(
+        Metric('request_fluency', langcheck.metrics.fluency,
+               langcheck.metrics.ja.fluency, [request], enable_local, True))
+    metrics_to_compute.append(
+        Metric('response_fluency', langcheck.metrics.fluency,
+               langcheck.metrics.ja.fluency, [response], enable_local, True))
+    metrics_to_compute.append(
+        Metric('request_readability', langcheck.metrics.flesch_reading_ease,
+               langcheck.metrics.ja.tateishi_ono_yamada_reading_ease,
+               [request], True, False))
+    metrics_to_compute.append(
+        Metric('response_readability', langcheck.metrics.flesch_reading_ease,
+               langcheck.metrics.ja.tateishi_ono_yamada_reading_ease,
+               [response], True, False))
+    # TODO: Use japanese metrics once implemented
+    metrics_to_compute.append(
+        Metric('ai_disclaimer_similarity',
+               langcheck.metrics.ai_disclaimer_similarity,
+               langcheck.metrics.ai_disclaimer_similarity, [response], True,
+               False))
 
-        add_metric_to_db(langcheck.metrics.toxicity, [response],
-                         'response_toxicity',
-                         log_id,
-                         openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.sentiment, [response],
-                         'response_sentiment',
-                         log_id,
-                         openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.fluency, [response],
-                         'response_fluency',
-                         log_id,
-                         openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.flesch_reading_ease,
-                         [response], 'response_readability', log_id)
-        add_metric_to_db(langcheck.metrics.ai_disclaimer_similarity,
-                         [response], 'ai_disclaimer_similarity', log_id)
-    else:
-        if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True':
-            # If the local version of factual consistency was computed
-            # first, we compute the OpenAI version here
-            factual_consistency_openai = langcheck.metrics.ja.factual_consistency(
-                response,
-                source,
-                model_type='azure_openai',
-                openai_args=openai_args)
-            db.update_chatlog_by_id(
-                {'factual_consistency_openai': factual_consistency_openai.metric_values[0],
-                 'factual_consistency_openai_explanation': factual_consistency_openai.explanations[0]},
-                log_id)
-        add_metric_to_db(langcheck.metrics.ja.toxicity, [request],
-                         'request_toxicity',
-                         log_id,
-                         openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.ja.sentiment, [request],
-                         'request_sentiment',
-                         log_id,
-                         openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.ja.fluency, [request],
-                         'request_fluency',
-                         log_id,
-                         openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.ja.tateishi_ono_yamada_reading_ease,
-                         [request], 'request_readability', log_id)
+    # First, add the metric names to the database, but don't yet compute the
+    # metrics
+    for metric in metrics_to_compute:
+        metric.insert_metric_names_to_db(log_id)
+    db.update_chatlog_by_id({'status': 'pending'}, log_id)
 
-        add_metric_to_db(langcheck.metrics.ja.toxicity, [response],
-                         'response_toxicity',
-                         log_id,
-                         openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.ja.sentiment, [response],
-                         'response_sentiment',
-                         log_id,
-                         openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.ja.fluency, [response],
-                         'response_fluency',
-                         log_id,
-                         openai_args=openai_args)
-        add_metric_to_db(langcheck.metrics.ja.tateishi_ono_yamada_reading_ease,
-                         [response], 'response_readability', log_id)
-        # TODO: Use japanese metrics once implemented
-        add_metric_to_db(langcheck.metrics.ai_disclaimer_similarity,
-                         [response], 'ai_disclaimer_similarity', log_id)
-    db.update_chatlog_by_id({'completed': 1}, log_id)
+    # Then, compute the metrics and update the database
+    for metric in metrics_to_compute:
+        metric.compute_metrics_and_update_db(language)
+    db.update_chatlog_by_id({'status': 'done'}, log_id)
 
 
 if __name__ == '__main__':

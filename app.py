@@ -143,12 +143,14 @@ def get_reference_based_metric():
     log_id = request.get_json().get('log_id', '')
     reference_text = request.get_json().get('reference')
 
-    # Update the completed flag before updating the record
-    db.update_chatlog_by_id({'completed': 0}, log_id)
+    # Update the status before updating the record
+    db.update_chatlog_by_id({'status': 'new'}, log_id)
 
     # Compute the metrics
-    subprocess.Popen(
-        ["python", "calculate_reference_metrics.py", str(log_id), reference_text])
+    subprocess.Popen([
+        "python", "calculate_reference_metrics.py",
+        str(log_id), reference_text
+    ])
     return jsonify(success=True)
 
 
@@ -205,26 +207,19 @@ def logs():
     page = int(request.args.get('page', 1))
     per_page = 10
     offset = (page - 1) * per_page
-    return jsonify(logs=db.get_chatlogs(per_page, offset))
+    return jsonify(logs=db.get_chatlogs_and_metrics(per_page, offset))
 
 
 @app.route('/api/metrics/<log_id>', methods=['GET'])
 def metrics_endpoint(log_id):
-    cols_to_exclude = ["id", "timestamp", "request",
-                       "response", "source", "reference"]
-    if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'False':
-        cols_to_exclude += [
-            'request_toxicity', 'response_toxicity', 'request_sentiment',
-            'response_sentiment', 'request_fluency', 'response_fluency',
-            'factual_consistency'
-        ]
-    metrics_data = db.get_chatlog_by_id(log_id)
-    filtered_metrics_data = {
-        key: value for key, value in metrics_data.items() if key not in cols_to_exclude}
-
-    if filtered_metrics_data is None:
-        return jsonify({"error": "No logs available"}), 400
-    return jsonify(filtered_metrics_data)
+    metrics_data = db.get_metrics_by_log_id(log_id)
+    if metrics_data is None:
+        return jsonify({"error": "No metrics available"}), 400
+    chatlog_data = db.get_chatlog_by_id(log_id)
+    if chatlog_data is None:
+        return jsonify({"error": "No chat logs available"}), 400
+    metrics_data['status'] = chatlog_data['status']
+    return jsonify(metrics_data)
 
 
 if __name__ == '__main__':

@@ -142,16 +142,6 @@ function generateAnswerRow(answer, factualConsistencyScore, warning) {
   `;
 }
 
-const METRICS_WITH_EXPLANATION = [
-  'request_fluency_openai',
-  'request_sentiment_openai',
-  'request_toxicity_openai',
-  'response_fluency_openai',
-  'response_sentiment_openai',
-  'response_toxicity_openai',
-  'factual_consistency_openai'
-];
-
 const REFERENCE_BASED_METRICS = [
   'rouge1',
   'rouge2',
@@ -162,21 +152,27 @@ function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
       $('#metrics-table tbody').empty();
-      for (let metric in data) {
-        if (metric !== "completed" && !metric.endsWith('_explanation')) {
-          let value = data[metric] !== null ? data[metric] : '<div class="spinner-border spinner-border-sm"></div>';
-          if (METRICS_WITH_EXPLANATION.includes(metric)) {
-            $('#metrics-table tbody').append(`<tr><td id=${metric}>${metric}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
-          } else {
-            $('#metrics-table tbody').append(`<tr><td>${metric}</td><td>${round(value, 4)}</td></tr>`);
-          }
+      // Add a row with a spinner if the status is still "new"
+      if (data.status === 'new') {
+        $('#metrics-table tbody').append(`<tr><td colspan="2" style="text-align: center;"><div class="spinner-border spinner-border-sm"></div></td></tr>`);
+        return;
+      }
+      for (let metricName in data) {
+        if (metricName === "status") {
+          continue;
+        }
+        let value = data[metricName]['metric_value'] !== null ? data[metricName]['metric_value'] : '<div class="spinner-border spinner-border-sm"></div>';
+        if (data[metricName]['explanation'] !== null) {
+          $('#metrics-table tbody').append(`<tr><td id=${metricName}>${metricName}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
+        } else {
+          $('#metrics-table tbody').append(`<tr><td>${metricName}</td><td>${round(value, 4)}</td></tr>`);
         }
       }
 
-      if (data.completed) {
+      if (data.status === 'done') {
         // Add OpenAI metrics explanation
         getMetricsExplanation(id);
-        // Stop polling if metrics computation is completed
+        // Stop polling if metrics computation is done
         clearInterval(metricsPollingInterval);
         // Remove the loading indicators, if any
         $('#metrics-table .spinner-border').remove();
@@ -194,7 +190,7 @@ function getMetricsExplanation(id) {
   .then(function (data) {
     for (const metric in data) {
       if(metric.endsWith('_openai')) {
-        $(`#${metric} svg`).attr('data-original-title', data[metric + '_explanation']);
+        $(`#${metric} svg`).attr('data-original-title', data[metric]['explanation']);
         $('#metrics-table tbody svg').removeClass("d-none");
         $('#metrics-table [data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
       }
