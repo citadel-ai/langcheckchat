@@ -57,6 +57,27 @@ def get_chatlog_by_id(id: int) -> Dict[str, Any]:
 
 
 def get_chatlogs_and_metrics(limit: int, offset: int) -> List[dict]:
+    '''
+    Returns a list of chat logs and metrics, each of which is a dictionary with
+    the following structure:
+    {
+        "<chat_log_id>": {
+            "id": <chat_log_id>,
+            "request": "...",
+            "response": "...",
+            "reference": "...",
+            "timestamp": "<timestamp>",
+            "source": "..",
+            "language": "<language>",
+            "status": "done",
+            "metrics": {
+                "ai_disclaimer_similarity": {"metric_value": <metric_value>, "explanation": "..."},
+                "factual_consistency_openai": {"metric_value": <metric_value>, "explanation": "..."},
+                ...
+            }
+        }
+    }
+    '''
     query = '''
         SELECT chat_log.*, metric.metric_name, metric.metric_value, metric.explanation
         FROM (

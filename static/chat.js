@@ -145,16 +145,6 @@ function generateAnswerRow(answer, factualConsistencyScore, warning) {
   `;
 }
 
-const METRICS_WITH_EXPLANATION = [
-  'request_fluency_openai',
-  'request_sentiment_openai',
-  'request_toxicity_openai',
-  'response_fluency_openai',
-  'response_sentiment_openai',
-  'response_toxicity_openai',
-  'factual_consistency_openai'
-];
-
 const REFERENCE_FREE_METRICS = [
   'request_toxicity',
   'request_toxicity_openai',
@@ -209,7 +199,7 @@ function updateMetrics(id) {
         } else {
           continue;
         }
-        if (METRICS_WITH_EXPLANATION.includes(metricName)) {
+        if (data[metricName]['explanation'] !== null) {
           $(metricTableID + ' tbody').append(`<tr><td id=${metricName}>${metricName}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
         } else {
           $(metricTableID + ' tbody').append(`<tr><td>${metricName}</td><td>${round(value, 4)}</td></tr>`);
