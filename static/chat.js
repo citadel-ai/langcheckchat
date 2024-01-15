@@ -172,7 +172,7 @@ function updateMetrics(id) {
           continue;
         }
         let value = data[metricName]['metric_value'] !== null ? data[metricName]['metric_value'] : '<div class="spinner-border spinner-border-sm"></div>';
-        if (METRICS_WITH_EXPLANATION.includes(metricName)) {
+        if (data[metricName]['explanation'] !== null) {
           $('#metrics-table tbody').append(`<tr><td id=${metricName}>${metricName}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
         } else {
           $('#metrics-table tbody').append(`<tr><td>${metricName}</td><td>${round(value, 4)}</td></tr>`);
