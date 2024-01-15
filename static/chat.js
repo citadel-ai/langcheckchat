@@ -57,8 +57,11 @@ function sendMessage() {
   `);
 
   // Clear metrics
-  $('#metrics-table tbody').empty();
+  $('#metrics-table-container tbody').empty();
   $('#sources-table tbody pre').empty();
+
+  // Hide the "Reference-Based Text Quality Metrics" table by default
+  $('#reference-based-metrics-container').hide();
 
   $.post({
     url: chatEndpoint,
@@ -95,6 +98,9 @@ function calculateReferenceBasedTextQuality(e) {
   // Scroll to the metrics table
   scrollToMetricsTable(e)
 
+  // Show the "Reference-Based Text Quality Metrics" table
+  $('#reference-based-metrics-container').show();
+
   $.post({
     url: '/api/ref_metric',
     data: JSON.stringify({ log_id: logID, reference: reference }),
@@ -111,7 +117,7 @@ function calculateReferenceBasedTextQuality(e) {
 }
 
 function scrollToMetricsTable(e) {
-  var tableTop = $('#metrics-table').offset().top;
+  var tableTop = $('#metrics-table-container').offset().top;
   $('html, body').animate({scrollTop: tableTop}, 500);
 }
 
@@ -142,6 +148,29 @@ function generateAnswerRow(answer, factualConsistencyScore, warning) {
   `;
 }
 
+const REFERENCE_FREE_METRICS = [
+  'request_toxicity',
+  'request_toxicity_openai',
+  'response_toxicity',
+  'response_toxicity_openai',
+  'request_sentiment',
+  'request_sentiment_openai',
+  'response_sentiment',
+  'response_sentiment_openai',
+  'request_fluency',
+  'request_fluency_openai',
+  'response_fluency',
+  'response_fluency_openai',
+  'request_readability',
+  'response_readability',
+  'ai_disclaimer_similarity'
+];
+
+const SOURCE_BASED_METRICS = [
+  'factual_consistency',
+  'factual_consistency_openai'
+];
+
 const REFERENCE_BASED_METRICS = [
   'rouge1',
   'rouge2',
@@ -151,10 +180,10 @@ const REFERENCE_BASED_METRICS = [
 function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
-      $('#metrics-table tbody').empty();
+      $('#metrics-table-container tbody').empty();
       // Add a row with a spinner if the status is still "new"
       if (data.status === 'new') {
-        $('#metrics-table tbody').append(`<tr><td colspan="2" style="text-align: center;"><div class="spinner-border spinner-border-sm"></div></td></tr>`);
+        $('#metrics-table-container tbody').append(`<tr><td colspan="2" style="text-align: center;"><div class="spinner-border spinner-border-sm"></div></td></tr>`);
         return;
       }
       for (let metricName in data) {
@@ -162,10 +191,20 @@ function updateMetrics(id) {
           continue;
         }
         let value = data[metricName]['metric_value'] !== null ? data[metricName]['metric_value'] : '<div class="spinner-border spinner-border-sm"></div>';
-        if (data[metricName]['explanation'] !== null) {
-          $('#metrics-table tbody').append(`<tr><td id=${metricName}>${metricName}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
+        let metricTableID = ''
+        if (REFERENCE_FREE_METRICS.includes(metricName)) {
+          metricTableID = '#reference-free-metrics-table';
+        } else if (SOURCE_BASED_METRICS.includes(metricName)) {
+          metricTableID = '#source-based-metrics-table';
+        } else if (REFERENCE_BASED_METRICS.includes(metricName)) {
+          metricTableID = '#reference-based-metrics-table';
         } else {
-          $('#metrics-table tbody').append(`<tr><td>${metricName}</td><td>${round(value, 4)}</td></tr>`);
+          continue;
+        }
+        if (data[metricName]['explanation'] !== null) {
+          $(metricTableID + ' tbody').append(`<tr><td id=${metricName}>${metricName}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
+        } else {
+          $(metricTableID + ' tbody').append(`<tr><td>${metricName}</td><td>${round(value, 4)}</td></tr>`);
         }
       }
 
@@ -175,7 +214,7 @@ function updateMetrics(id) {
         // Stop polling if metrics computation is done
         clearInterval(metricsPollingInterval);
         // Remove the loading indicators, if any
-        $('#metrics-table .spinner-border').remove();
+        $('#metrics-table-container .spinner-border').remove();
         // Enable the "Submit Reference" button
         $('#submit-ref-button').prop("disabled", false);
         // Hide the tooktip for the "Submit Reference" button
@@ -191,8 +230,8 @@ function getMetricsExplanation(id) {
     for (const metric in data) {
       if(metric.endsWith('_openai')) {
         $(`#${metric} svg`).attr('data-original-title', data[metric]['explanation']);
-        $('#metrics-table tbody svg').removeClass("d-none");
-        $('#metrics-table [data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
+        $('#metrics-table-container tbody svg').removeClass("d-none");
+        $('#metrics-table-container [data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
       }
     }
   });

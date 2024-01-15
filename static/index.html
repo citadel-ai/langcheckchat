@@ -69,8 +69,9 @@
         </table>
       </div>
       <div class="col-4">
-        <div>
-          <table class="table table-bordered table-hover" id="metrics-table">
+        <div id="metrics-table-container">
+          <p class="text-metrics-title">Reference-Free Text Quality Metrics</p>
+          <table class="table table-bordered table-hover" id="reference-free-metrics-table">
             <thead class="thead-light">
               <tr>
                 <th>Metric</th>
@@ -81,6 +82,32 @@
               <!-- Rows will be added dynamically here -->
             </tbody>
           </table>
+          <p class="text-metrics-title">Source-Based Text Quality Metrics</p>
+          <table class="table table-bordered table-hover" id="source-based-metrics-table">
+            <thead class="thead-light">
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody class="text-monospace">
+              <!-- Rows will be added dynamically here -->
+            </tbody>
+          </table>
+          <span id="reference-based-metrics-container">
+            <p class="text-metrics-title">Reference-Based Text Quality Metrics</p>
+            <table class="table table-bordered table-hover" id="reference-based-metrics-table">
+              <thead class="thead-light">
+                <tr>
+                  <th>Metric</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody class="text-monospace">
+                <!-- Rows will be added dynamically here -->
+              </tbody>
+            </table>
+          </span>
         </div>
       </div>
     </div>

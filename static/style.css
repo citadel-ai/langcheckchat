@@ -135,3 +135,9 @@ summary {
 .tooltip-inner {
     min-width: 300px;
 }
+
+.text-metrics-title {
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: #495057;
+}
