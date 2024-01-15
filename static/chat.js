@@ -98,6 +98,9 @@ function calculateReferenceBasedTextQuality(e) {
   // Scroll to the metrics table
   scrollToMetricsTable(e)
 
+  // Show the "Reference-Based Text Quality Metrics" table
+  $('#reference-based-metrics-container').show();
+
   $.post({
     url: '/api/ref_metric',
     data: JSON.stringify({ log_id: logID, reference: reference }),
@@ -195,7 +198,6 @@ function updateMetrics(id) {
           metricTableID = '#source-based-metrics-table';
         } else if (REFERENCE_BASED_METRICS.includes(metricName)) {
           metricTableID = '#reference-based-metrics-table';
-          $('#reference-based-metrics-container').show();
         } else {
           continue;
         }
