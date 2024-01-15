@@ -194,7 +194,7 @@ function updateMetrics(id) {
         } else if (SOURCE_BASED_METRICS.includes(metricName)) {
           metricTableID = '#source-based-metrics-table';
         } else if (REFERENCE_BASED_METRICS.includes(metricName)) {
-          metricTableID = '#referebce-based-metrics-table';
+          metricTableID = '#reference-based-metrics-table';
           $('#reference-based-metrics-container').show();
         } else {
           continue;
