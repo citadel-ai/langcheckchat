@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS metric (
     metric_name TEXT NOT NULL,
     metric_value REAL,
     explanation TEXT,
-    FOREIGN KEY (log_id) REFERENCES chat(id)
+    FOREIGN KEY (log_id) REFERENCES chat_log(id)
 );
