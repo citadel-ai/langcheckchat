@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 from flask import Blueprint, jsonify, request
 from llama_index import (GPTVectorStoreIndex, ServiceContext, download_loader,
                          set_global_service_context)
-from llama_index.embeddings import AzureOpenAIEmbedding
-from llama_index.llms import AzureOpenAI
+from llama_index.embeddings import AzureOpenAIEmbedding, OpenAIEmbedding
+from llama_index.llms import AzureOpenAI, OpenAI
 from llama_index.readers import SimpleWebPageReader, StringIterableReader
 
 import database as db
@@ -70,20 +70,26 @@ else:
     with open(SAVED_DOCUMENTS, 'wb') as f:
         pickle.dump(documents, f)
 
-llm = AzureOpenAI(
-    model=os.environ['AZURE_OPENAI_API_MODEL'],
-    engine=os.environ['AZURE_OPENAI_API_DEPLOYMENT'],
-    api_key=os.environ['AZURE_OPENAI_KEY'],
-    api_base=os.environ['AZURE_OPENAI_ENDPOINT'],
-    api_type='azure',
-    api_version=os.environ['OPENAI_API_VERSION'],
-)
+# Initialize LLM and embedding model depending on the API type
+if os.environ['OPENAI_API_TYPE'] == 'openai':
+    llm = OpenAI(model=os.environ['OPENAI_API_MODEL'])
+    embed_model = OpenAIEmbedding(
+        model=os.environ['OPENAI_API_EMBEDDING_MODEL'])
 
-embed_model = AzureOpenAIEmbedding(
-    model=os.environ['AZURE_OPENAI_API_EMBEDDING_MODEL'],
-    api_key=os.environ['AZURE_OPENAI_KEY'],
-    api_version=os.environ['OPENAI_API_VERSION'],
-    api_endpoint=os.environ['AZURE_OPENAI_ENDPOINT'])
+elif os.environ['OPENAI_API_TYPE'] == 'azure':
+    llm = AzureOpenAI(
+        model=os.environ['AZURE_OPENAI_API_MODEL'],
+        engine=os.environ['AZURE_OPENAI_API_DEPLOYMENT'],
+        api_key=os.environ['AZURE_OPENAI_KEY'],
+        api_base=os.environ['AZURE_OPENAI_ENDPOINT'],
+        api_version=os.environ['OPENAI_API_VERSION'],
+    )
+
+    embed_model = AzureOpenAIEmbedding(
+        model=os.environ['AZURE_OPENAI_API_EMBEDDING_MODEL'],
+        api_key=os.environ['AZURE_OPENAI_KEY'],
+        api_version=os.environ['OPENAI_API_VERSION'],
+        api_endpoint=os.environ['AZURE_OPENAI_ENDPOINT'])
 
 service_context = ServiceContext.from_defaults(
     llm=llm,
