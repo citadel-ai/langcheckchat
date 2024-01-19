@@ -167,7 +167,7 @@ def rag(user_message, language):
     # Compute the factual consistency score and add it along with the chat
     # data to the db
     factual_consistency_score, factual_consistency_explanation = get_factual_consistency(
-        source, response_message, language)
+        response_message, source, language)
 
     return response_message, source, factual_consistency_score, factual_consistency_explanation
 
