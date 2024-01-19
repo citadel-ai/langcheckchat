@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 
 import langcheck.metrics
 from dotenv import load_dotenv
+from openai import AzureOpenAI, OpenAI
 
 import database as db
 
@@ -125,9 +126,26 @@ class Metric:
             db.update_metric_by_id(metric_result.metric_values[0], None,
                                    self.local_metric_id)
         if self.openai_metric_id is not None:
-            openai_args = {'model': os.environ['AZURE_OPENAI_API_DEPLOYMENT']}
+            if os.environ['LANGCHECK_OPENAI_API_TYPE'] == 'azure':
+                model_type = 'azure_openai'
+                client = AzureOpenAI(
+                    api_key=os.environ['LANGCHECK_AZURE_OPENAI_KEY'],
+                    api_version=os.environ['LANGCHECK_OPENAI_API_VERSION'],
+                    azure_endpoint=os.
+                    environ['LANGCHECK_AZURE_OPENAI_ENDPOINT'])  # type: ignore
+                openai_args = {
+                    'model':
+                    os.environ['LANGCHECK_AZURE_OPENAI_API_DEPLOYMENT']
+                }
+            else:
+                model_type = 'openai'
+                client = OpenAI(api_key=os.environ['LANGCHECK_OPENAI_API_KEY'])
+                openai_args = {
+                    'model': os.environ['LANGCHECK_OPENAI_API_MODEL']
+                }
             metric_result = metric_fn(*self.args,
-                                      model_type='azure_openai',
+                                      model_type=model_type,
+                                      openai_client=client,
                                       openai_args=openai_args)
             db.update_metric_by_id(metric_result.metric_values[0],
                                    metric_result.explanations[0],
