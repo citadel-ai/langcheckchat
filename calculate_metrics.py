@@ -61,13 +61,11 @@ class Metric:
                 log_id, f"{self.metric_name}_openai", None, None)
 
     def compute_local_metric(self, language):
-        assert self.local_metric_id is not None
         metric_fn = self.metric_fn if language == 'en' else self.metric_fn_jp
         metric_result = metric_fn(*self.args)
         return metric_result.metric_values[0]
 
     def compute_openai_metric(self, language):
-        assert self.openai_metric_id is not None
         metric_fn = self.metric_fn if language == 'en' else self.metric_fn_jp
         if os.environ['LANGCHECK_OPENAI_API_TYPE'] == 'azure':
             model_type = 'azure_openai'
