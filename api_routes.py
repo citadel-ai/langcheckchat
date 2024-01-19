@@ -164,10 +164,6 @@ def rag(user_message, language):
     sources = [node.node.text for node in response.source_nodes]
     source = '\n'.join(sources)
 
-    # TODO: Get from user inputs
-    language = request.get_json().get('language', 'en')
-    print(language)
-
     # Compute the factual consistency score and add it along with the chat
     # data to the db
     factual_consistency_score, factual_consistency_explanation = get_factual_consistency_score(
