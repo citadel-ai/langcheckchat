@@ -67,6 +67,7 @@ class Metric:
 
     def compute_openai_metric(self, language):
         metric_fn = self.metric_fn if language == 'en' else self.metric_fn_jp
+        assert os.environ['LANGCHECK_OPENAI_API_TYPE'] in ['openai', 'azure']
         if os.environ['LANGCHECK_OPENAI_API_TYPE'] == 'azure':
             model_type = 'azure_openai'
             openai_client = AzureOpenAI(
