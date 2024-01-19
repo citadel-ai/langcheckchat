@@ -71,12 +71,12 @@ else:
         pickle.dump(documents, f)
 
 # Initialize LLM and embedding model depending on the API type
+assert os.environ['OPENAI_API_TYPE'] in ['openai', 'azure']
 if os.environ['OPENAI_API_TYPE'] == 'openai':
     llm = OpenAI(model=os.environ['OPENAI_API_MODEL'])
     embed_model = OpenAIEmbedding(
         model=os.environ['OPENAI_API_EMBEDDING_MODEL'])
-
-elif os.environ['OPENAI_API_TYPE'] == 'azure':
+else:
     llm = AzureOpenAI(
         model=os.environ['AZURE_OPENAI_API_MODEL'],
         engine=os.environ['AZURE_OPENAI_API_DEPLOYMENT'],
