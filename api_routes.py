@@ -3,7 +3,6 @@ import os
 import pickle
 import subprocess
 from datetime import datetime
-from time import sleep
 
 import langcheck
 import pytz
