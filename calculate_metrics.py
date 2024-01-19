@@ -11,65 +11,6 @@ import database as db
 load_dotenv()
 
 
-def get_factual_consistency_score(
-        source: str, response: str,
-        language: str) -> Tuple[float, Optional[str]]:
-    '''Get factual consistency score for a response given a source.'''
-    openai_args = {'model': os.environ['AZURE_OPENAI_API_DEPLOYMENT']}
-    use_local = os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True'
-    if use_local and language == 'ja':
-        # TODO: Remove this once the problem is fixed in langcheck package
-        if len(source) < 512:
-            factual_consistency_score = langcheck.metrics.ja.factual_consistency(
-                response, source).metric_values[0]
-        else:
-            factual_consistency_score_fst = langcheck.metrics.ja.factual_consistency(
-                response, source[:len(source) // 2]).metric_values[0]
-            factual_consistency_score_snd = langcheck.metrics.ja.factual_consistency(
-                response, source[len(source) // 2:]).metric_values[0]
-            # For type check
-            assert factual_consistency_score_fst is not None
-            assert factual_consistency_score_snd is not None
-            factual_consistency_score = max(factual_consistency_score_fst,
-                                            factual_consistency_score_snd)
-        # For type check
-        assert factual_consistency_score is not None
-        return factual_consistency_score, None
-
-    elif use_local and language == 'en':
-        factual_consistency_score = langcheck.metrics.factual_consistency(
-            response, source).metric_values[0]
-        # For type check
-        assert factual_consistency_score is not None
-        return factual_consistency_score, None
-
-    elif not use_local and language == 'ja':
-        factual_consistency = langcheck.metrics.ja.factual_consistency(
-            response,
-            source,
-            model_type='azure_openai',
-            openai_args=openai_args)
-        # TODO: Gracefully handle the case where the score is None
-        assert factual_consistency.metric_values[0] is not None
-        # For type check
-        assert factual_consistency.explanations is not None
-        return factual_consistency.metric_values[
-            0], factual_consistency.explanations[0]
-    else:
-        assert not use_local and language == 'en'
-        factual_consistency = langcheck.metrics.factual_consistency(
-            response,
-            source,
-            model_type='azure_openai',
-            openai_args=openai_args)
-        # TODO: Gracefully handle the case where the score is None
-        assert factual_consistency.metric_values[0] is not None
-        # For type check
-        assert factual_consistency.explanations is not None
-        return factual_consistency.metric_values[
-            0], factual_consistency.explanations[0]
-
-
 def add_init_to_db(request, response, source, language, score, explanation,
                    timestamp) -> int:
     if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True':
@@ -119,37 +60,77 @@ class Metric:
             self.openai_metric_id = db.insert_metric(
                 log_id, f"{self.metric_name}_openai", None, None)
 
-    def compute_metrics_and_update_db(self, language):
+    def compute_local_metric(self, language):
+        assert self.local_metric_id is not None
         metric_fn = self.metric_fn if language == 'en' else self.metric_fn_jp
+        metric_result = metric_fn(*self.args)
+        return metric_result.metric_values[0]
+
+    def compute_openai_metric(self, language):
+        assert self.openai_metric_id is not None
+        metric_fn = self.metric_fn if language == 'en' else self.metric_fn_jp
+        if os.environ['LANGCHECK_OPENAI_API_TYPE'] == 'azure':
+            model_type = 'azure_openai'
+            openai_client = AzureOpenAI(
+                api_key=os.environ['LANGCHECK_AZURE_OPENAI_KEY'],
+                api_version=os.environ['LANGCHECK_OPENAI_API_VERSION'],
+                azure_endpoint=os.environ['LANGCHECK_AZURE_OPENAI_ENDPOINT'])
+            openai_args = {
+                'model': os.environ['LANGCHECK_AZURE_OPENAI_API_DEPLOYMENT']
+            }
+        else:
+            model_type = 'openai'
+            openai_client = OpenAI(
+                api_key=os.environ['LANGCHECK_OPENAI_API_KEY'])
+            openai_args = {'model': os.environ['LANGCHECK_OPENAI_API_MODEL']}
+        metric_result = metric_fn(*self.args,
+                                  model_type=model_type,
+                                  openai_client=openai_client,
+                                  openai_args=openai_args)
+        return metric_result.metric_values[0], metric_result.explanations[0]
+
+    def compute_metrics_and_update_db(self, language):
         if self.local_metric_id is not None:
-            metric_result = metric_fn(*self.args)
-            db.update_metric_by_id(metric_result.metric_values[0], None,
-                                   self.local_metric_id)
+            value = self.compute_local_metric(language)
+            db.update_metric_by_id(value, None, self.local_metric_id)
         if self.openai_metric_id is not None:
-            if os.environ['LANGCHECK_OPENAI_API_TYPE'] == 'azure':
-                model_type = 'azure_openai'
-                client = AzureOpenAI(
-                    api_key=os.environ['LANGCHECK_AZURE_OPENAI_KEY'],
-                    api_version=os.environ['LANGCHECK_OPENAI_API_VERSION'],
-                    azure_endpoint=os.
-                    environ['LANGCHECK_AZURE_OPENAI_ENDPOINT'])  # type: ignore
-                openai_args = {
-                    'model':
-                    os.environ['LANGCHECK_AZURE_OPENAI_API_DEPLOYMENT']
-                }
-            else:
-                model_type = 'openai'
-                client = OpenAI(api_key=os.environ['LANGCHECK_OPENAI_API_KEY'])
-                openai_args = {
-                    'model': os.environ['LANGCHECK_OPENAI_API_MODEL']
-                }
-            metric_result = metric_fn(*self.args,
-                                      model_type=model_type,
-                                      openai_client=client,
-                                      openai_args=openai_args)
-            db.update_metric_by_id(metric_result.metric_values[0],
-                                   metric_result.explanations[0],
-                                   self.openai_metric_id)
+            value, explanation = self.compute_openai_metric(language)
+            db.update_metric_by_id(value, explanation, self.openai_metric_id)
+
+
+def get_factual_consistency(response, source, language):
+    use_local = os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True'
+
+    if language == 'ja' and use_local:
+        # TODO: Remove this once the problem is fixed in langcheck package
+        if len(source) >= 512:
+            first_factual_consistency_metric = Metric(
+                'factual_consistency', langcheck.metrics.factual_consistency,
+                langcheck.metrics.ja.factual_consistency,
+                [response, source[:len(source) // 2]], True, False)
+            second_factual_consistency_metric = Metric(
+                'factual_consistency', langcheck.metrics.factual_consistency,
+                langcheck.metrics.ja.factual_consistency,
+                [response, source[len(source) // 2:]], True, False)
+            first_score = first_factual_consistency_metric.compute_local_metric(
+                language)
+            second_score = second_factual_consistency_metric.compute_local_metric(
+                language)
+            return max(first_score, second_score), None
+
+    elif use_local:
+        factual_consistency_metric = Metric(
+            'factual_consistency', langcheck.metrics.factual_consistency,
+            langcheck.metrics.ja.factual_consistency, [response, source], True,
+            False)
+        return factual_consistency_metric.compute_local_metric(language), None
+
+    else:
+        factual_consistency_metric = Metric(
+            'factual_consistency', langcheck.metrics.factual_consistency,
+            langcheck.metrics.ja.factual_consistency, [response, source],
+            False, True)
+        return factual_consistency_metric.compute_openai_metric(language)
 
 
 def main(log_id):
