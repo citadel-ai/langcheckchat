@@ -98,7 +98,8 @@ class Metric:
             db.update_metric_by_id(value, explanation, self.openai_metric_id)
 
 
-def get_factual_consistency(response, source, language):
+def get_factual_consistency(response, source,
+                            language) -> Tuple[float, Optional[str]]:
     use_local = os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True'
 
     if language == 'ja' and use_local:
@@ -118,7 +119,7 @@ def get_factual_consistency(response, source, language):
                 language)
             return max(first_score, second_score), None
 
-    elif use_local:
+    if use_local:
         factual_consistency_metric = Metric(
             'factual_consistency', langcheck.metrics.factual_consistency,
             langcheck.metrics.ja.factual_consistency, [response, source], True,
