@@ -110,25 +110,28 @@ def chat():
 
     if request.path == '/api/chat_demo':
         # Get canned responses to speed up live demos
-        response_message, source, factual_consistency, factual_consistency_explanation = rag_demo(
-            user_message, language)
+        response_message, source = rag_demo(user_message, language)
     else:
-        response_message, source, factual_consistency, factual_consistency_explanation = rag(
-            user_message, language)
+        response_message, source = rag(user_message, language)
+
+    # Compute the factual consistency score and add it along with the chat
+    # data to the db
+    factual_consistency_score, factual_consistency_explanation = get_factual_consistency(
+        response_message, source, language)
 
     timestamp = datetime.now(
         pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S')
 
     log_id = add_init_to_db(user_message, response_message, source, language,
-                            factual_consistency,
+                            factual_consistency_score,
                             factual_consistency_explanation, timestamp)
 
     # Compute and log all the other metrics
     subprocess.Popen(["python", "calculate_metrics.py", str(log_id)])
-    warning = factual_consistency < 0.5
+    warning = factual_consistency_score < 0.5
 
     return jsonify(response=response_message,
-                   score=factual_consistency,
+                   score=factual_consistency_score,
                    warning=warning,
                    source=source,
                    id=log_id)
@@ -165,12 +168,7 @@ def rag(user_message, language):
     sources = [node.node.text for node in response.source_nodes]
     source = '\n'.join(sources)
 
-    # Compute the factual consistency score and add it along with the chat
-    # data to the db
-    factual_consistency_score, factual_consistency_explanation = get_factual_consistency(
-        response_message, source, language)
-
-    return response_message, source, factual_consistency_score, factual_consistency_explanation
+    return response_message, source
 
 
 def rag_demo(user_message, language):
@@ -193,12 +191,10 @@ def rag_demo(user_message, language):
         response = demo_responses[user_message_key]
         response_message = response['response_message']
         source = response['source']
-        factual_consistency_score = response['factual_consistency_score']
     else:
         return rag(user_message, language)
 
-    sleep(3)
-    return response_message, source, factual_consistency_score, None
+    return response_message, source
 
 
 @api_routes_blueprint.route('/api/logs', methods=['GET'])
