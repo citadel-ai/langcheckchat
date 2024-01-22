@@ -16,8 +16,10 @@ function loadLogs(direction) {
             // over this object and construct the rows of the table.
             const metricRows = Object.entries(log.metrics).map(([metricName, metricData]) => {
               if (metricData.explanation !== null) {
+                // TODO: Surely there's a better way to do this???
+                const title = metricData.explanation.replace(/"/g, "'").replace(/&/g, "and").replace(/</g, "lt").replace(/>/g, "gt");
                 return `<tr>
-                          <td id=${metricName}>${metricName}<span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${metricData.explanation.replace(/"/g, "'")}"></td>
+                          <td id=${metricName}>${metricName}<span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${title}"></td>
                           <td>${round(metricData.metric_value, 4)}</td>
                         </tr>`;
               } else {
