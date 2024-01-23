@@ -238,7 +238,7 @@ function getMetricsExplanation(id) {
   .then(function (data) {
     for (const metric in data) {
       if(metric.endsWith('_openai')) {
-        const title = data[metric]['explanation'].replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+        const title = escapeHTML(data[metric]['explanation']);
         $(`#${metric} span[data-toggle="tooltip"]`).attr('data-original-title', title);
         $('#metrics-table-container tbody span[data-toggle="tooltip"]').removeClass("d-none");
       }

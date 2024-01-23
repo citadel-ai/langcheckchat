@@ -16,7 +16,7 @@ function loadLogs(direction) {
             // over this object and construct the rows of the table.
             const metricRows = Object.entries(log.metrics).map(([metricName, metricData]) => {
               if (metricData.explanation !== null) {
-                const title = metricData.explanation.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+                const title = escapeHTML(metricData.explanation);
                 return `<tr>
                           <td id=${metricName}>${metricName}
                             <span class="ml-2" data-html="true" data-toggle="tooltip" data-placement="top" title="${title}">
