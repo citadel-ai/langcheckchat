@@ -202,7 +202,16 @@ function updateMetrics(id) {
           continue;
         }
         if (data[metricName]['explanation'] !== null) {
-          $(metricTableID + ' tbody').append(`<tr><td id=${metricName}>${metricName}<span class="ml-2 d-none" data-feather="help-circle" data-toggle="tooltip" data-placement="top"></td><td>${round(value, 4)}</td></tr>`);
+          $(metricTableID + ' tbody').append(`
+            <tr>
+              <td id=${metricName}>${metricName}
+                <span class="ml-2 d-none" data-html="true" data-toggle="tooltip" data-placement="top">
+                  <span data-feather="help-circle"></span>
+                </span>
+              </td>
+              <td>${round(value, 4)}</td>
+            </tr>
+          `);
         } else {
           $(metricTableID + ' tbody').append(`<tr><td>${metricName}</td><td>${round(value, 4)}</td></tr>`);
         }
@@ -229,11 +238,12 @@ function getMetricsExplanation(id) {
   .then(function (data) {
     for (const metric in data) {
       if(metric.endsWith('_openai')) {
-        $(`#${metric} svg`).attr('data-original-title', data[metric]['explanation']);
-        $('#metrics-table-container tbody svg').removeClass("d-none");
-        $('#metrics-table-container [data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
+        const title = data[metric]['explanation'].replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+        $(`#${metric} span[data-toggle="tooltip"]`).attr('data-original-title', title);
+        $('#metrics-table-container tbody span[data-toggle="tooltip"]').removeClass("d-none");
       }
     }
   });
   feather.replace();
+  $('[data-toggle="tooltip"]').tooltip();
 }
