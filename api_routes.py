@@ -92,8 +92,10 @@ def logs_comparison():
     database_b_name = request.args.get('database_b')
     assert database_a_name is not None
     assert database_b_name is not None
-    assert Path('db/' + database_a_name).exists()
-    assert Path('db/' + database_b_name).exists()
+    database_a_path = Path('db/' + database_a_name)
+    database_b_path = Path('db/' + database_b_name)
+    assert database_a_path.exists() and database_a_path.is_file()
+    assert database_b_path.exists() and database_b_path.is_file()
     per_page = 10
     offset = (page - 1) * per_page
     return jsonify(
