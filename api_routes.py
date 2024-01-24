@@ -84,6 +84,15 @@ def logs():
     return jsonify(logs=db.get_chatlogs_and_metrics(per_page, offset))
 
 
+@api_routes_blueprint.route('/api/logs_comparison', methods=['GET'])
+def logs_comparison():
+    page = int(request.args.get('page', 1))
+    per_page = 10
+    offset = (page - 1) * per_page
+    return jsonify(
+        logs=db.get_comparison_chatlogs_and_metrics(per_page, offset))
+
+
 @api_routes_blueprint.route('/api/metrics/<log_id>', methods=['GET'])
 def metrics_endpoint(log_id):
     metrics_data = db.get_metrics_by_log_id(log_id)
