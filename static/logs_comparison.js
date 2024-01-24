@@ -89,7 +89,10 @@ $(document).ready(function() {
     loadLogs(); // Load initial logs on page load
     $('#prevButton').click(function() { loadLogs('prev'); });
     $('#nextButton').click(function() { loadLogs('next'); });
-    $('#database-names-btn').click(function() { loadLogs(); });
+    $('#database-names-form').submit(function(e) {
+      e.preventDefault(); // Prevent the form from being submitted normally
+      loadLogs();
+  });
 });
 
 $('body').on('click', '.show-source', showSource);
