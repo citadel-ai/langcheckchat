@@ -7,7 +7,8 @@ function loadLogs(direction) {
         currentPage -= 1;
     }
     $('#qa-table tr:not(:first)').remove();  // Remove all rows except headers
-    $.get('/api/logs_comparison?page=' + currentPage, function(data) {
+    const logsComparisonUrl = `/api/logs_comparison?page=${currentPage}&database_a=${$('#database-a').val()}&database_b=${$('#database-b').val()}`;
+    $.get(logsComparisonUrl, function(data) {
         data.logs.forEach(log => {
             // Construct the rows of the metrics table. `log` has the fields
             // `metrics_a` and `metrics_b`, which are JSON objects with the
@@ -88,6 +89,7 @@ $(document).ready(function() {
     loadLogs(); // Load initial logs on page load
     $('#prevButton').click(function() { loadLogs('prev'); });
     $('#nextButton').click(function() { loadLogs('next'); });
+    $('#database-names-btn').click(function() { loadLogs(); });
 });
 
 $('body').on('click', '.show-source', showSource);

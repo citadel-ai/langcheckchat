@@ -1,6 +1,7 @@
 import os
 import subprocess
 from datetime import datetime
+from pathlib import Path
 
 import langcheck
 import pytz
@@ -87,6 +88,12 @@ def logs():
 @api_routes_blueprint.route('/api/logs_comparison', methods=['GET'])
 def logs_comparison():
     page = int(request.args.get('page', 1))
+    database_a_name = request.args.get('database_a')
+    database_b_name = request.args.get('database_b')
+    assert database_a_name is not None
+    assert database_b_name is not None
+    assert Path('db/' + database_a_name).exists()
+    assert Path('db/' + database_b_name).exists()
     per_page = 10
     offset = (page - 1) * per_page
     return jsonify(
