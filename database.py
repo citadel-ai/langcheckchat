@@ -111,7 +111,9 @@ def get_chatlogs_and_metrics(limit: int, offset: int) -> List[dict]:
     return list(id_to_logs.values())
 
 
-def get_comparison_chatlogs_and_metrics(limit: int, offset: int) -> List[dict]:
+def get_comparison_chatlogs_and_metrics(database_a_url: str,
+                                        database_b_url: str, limit: int,
+                                        offset: int) -> List[dict]:
     '''
     Returns a list of chat logs and metrics for Database A and Database B, each
     of which is a dictionary with the following structure:
@@ -153,7 +155,7 @@ def get_comparison_chatlogs_and_metrics(limit: int, offset: int) -> List[dict]:
                               'limit': limit,
                               'offset': offset
                           },
-                          database_url='db/evaluation_results_0121.db')
+                          database_url=database_a_url)
     query_b = '''
         SELECT chat_log.*, metric.metric_name, metric.metric_value, metric.explanation
         FROM (
@@ -162,8 +164,7 @@ def get_comparison_chatlogs_and_metrics(limit: int, offset: int) -> List[dict]:
         ) AS chat_log
         LEFT JOIN metric ON chat_log.id = metric.log_id
     '''
-    b_logs = _select_data(query_b,
-                          database_url='db/evaluation_results_0123-gpt4.db')
+    b_logs = _select_data(query_b, database_url=database_b_url)
     metric_columns = ['metric_name', 'metric_value', 'explanation']
 
     # Each row in a_logs corresponds to a single metric. We want to group

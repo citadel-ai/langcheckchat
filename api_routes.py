@@ -98,8 +98,8 @@ def logs_comparison():
     assert database_b_path.exists() and database_b_path.is_file()
     per_page = 10
     offset = (page - 1) * per_page
-    return jsonify(
-        logs=db.get_comparison_chatlogs_and_metrics(per_page, offset))
+    return jsonify(logs=db.get_comparison_chatlogs_and_metrics(
+        str(database_a_path), str(database_b_path), per_page, offset))
 
 
 @api_routes_blueprint.route('/api/metrics/<log_id>', methods=['GET'])
