@@ -1,5 +1,6 @@
 import os
 import subprocess
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
@@ -94,12 +95,27 @@ def logs_comparison():
     assert database_b_name is not None
     database_a_path = Path('db/' + database_a_name)
     database_b_path = Path('db/' + database_b_name)
-    assert database_a_path.exists() and database_a_path.is_file()
-    assert database_b_path.exists() and database_b_path.is_file()
+
+    errors = defaultdict(list)
+    if not database_a_path.exists():
+        errors['database-a'].append(
+            f'{database_a_name} does not exist in the db/ directory')
+    elif not database_a_path.is_file():
+        errors['database-a'].append(f'{database_a_name} is not a file')
+    if not database_b_path.exists():
+        errors['database-b'].append(
+            f'{database_b_name} does not exist in the db/ directory')
+    elif not database_b_path.is_file():
+        errors['database-b'].append(f'{database_b_name} is not a file')
+    if len(errors) > 0:
+        return {'success': False, 'errors': errors}
+
     per_page = 10
     offset = (page - 1) * per_page
-    return jsonify(logs=db.get_comparison_chatlogs_and_metrics(
-        str(database_a_path), str(database_b_path), per_page, offset))
+    return jsonify(success=True,
+                   logs=db.get_comparison_chatlogs_and_metrics(
+                       str(database_a_path), str(database_b_path), per_page,
+                       offset))
 
 
 @api_routes_blueprint.route('/api/metrics/<log_id>', methods=['GET'])
