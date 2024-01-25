@@ -142,7 +142,7 @@ summary {
   color: #495057;
 }
 
-.error-message {
+.database-name-error-message {
   padding-left: 125px;  /* Hack to align the error message with the input box */
   box-sizing: border-box;
 }
