@@ -8,8 +8,16 @@ function loadLogs(direction) {
     }
     $('#qa-table tr:not(:first)').remove();  // Remove all rows except headers
     const logsComparisonUrl = `/api/logs_comparison?page=${currentPage}&database_a=${$('#database-a').val()}&database_b=${$('#database-b').val()}`;
-    $.get(logsComparisonUrl, function(data) {
-        data.logs.forEach(log => {
+    $.get(logsComparisonUrl, function(response) {
+        if (response.success === false) {
+            const errors = Object.keys(response.errors);
+            errors.forEach(function(error) {
+                $(`*[data-error-for~="${error}"]`).addClass('is-invalid');
+                $(`*[data-error-message-for="${error}"]`).html(`<p>${response.errors[error]}</p>`);
+            });
+            return;
+        }
+        response.logs.forEach(log => {
             // Construct the rows of the metrics table. `log` has the fields
             // `metrics_a` and `metrics_b`, which are JSON objects with the
             // metric names as keys and their values as
@@ -91,8 +99,11 @@ $(document).ready(function() {
     $('#nextButton').click(function() { loadLogs('next'); });
     $('#database-names-form').submit(function(e) {
       e.preventDefault(); // Prevent the form from being submitted normally
+      // Clear the error messages
+      $('*[data-error-for]').removeClass('is-invalid');
+      $('*[data-error-message-for]').empty();
       loadLogs();
-  });
+    });
 });
 
 $('body').on('click', '.show-source', showSource);

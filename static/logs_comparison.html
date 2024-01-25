@@ -27,16 +27,18 @@
             <div class="input-group-prepend">
                 <div class="input-group-text font-weight-bold">Database A</div>
             </div>
-            <input type="text" class="form-control" id="database-a" placeholder="E.g. evaluation_results_a.db" value="evaluation_results_a.db" required>
+            <input data-error-for="database-a" type="text" class="form-control" id="database-a" placeholder="E.g. evaluation_results_a.db" value="evaluation_results_a.db" required>
         </div>
+        <div data-error-message-for="database-a" class="text-danger error-message"></div>
       </div>
       <div class="col-5">
           <div class="input-group shadow-sm mb-2">
               <div class="input-group-prepend">
                   <div class="input-group-text font-weight-bold">Database B</div>
               </div>
-              <input type="text" class="form-control" id="database-b" placeholder="E.g. evaluation_results_b.db" value="evaluation_results_b.db" required>
+              <input data-error-for="database-b" type="text" class="form-control" id="database-b" placeholder="E.g. evaluation_results_b.db" value="evaluation_results_b.db" required>
           </div>
+          <div data-error-message-for="database-b" class="text-danger error-message"></div>
       </div>
       <div class="col-auto">
           <button id="database-names-btn" type="submit" class="btn btn-primary mb-2">Submit</button>
