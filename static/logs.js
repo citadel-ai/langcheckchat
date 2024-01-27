@@ -16,8 +16,13 @@ function loadLogs(direction) {
             // over this object and construct the rows of the table.
             const metricRows = Object.entries(log.metrics).map(([metricName, metricData]) => {
               if (metricData.explanation !== null) {
+                const title = escapeHTML(metricData.explanation);
                 return `<tr>
-                          <td id=${metricName}>${metricName}<span class="ml-2" data-feather="help-circle" data-toggle="tooltip" data-placement="top" title="${metricData.explanation.replace(/"/g, "'")}"></td>
+                          <td id=${metricName}>${metricName}
+                            <span class="ml-2" data-html="true" data-toggle="tooltip" data-placement="top" title="${title}">
+                              <span data-feather="help-circle"></span>
+                            </span>
+                          </td>
                           <td>${round(metricData.metric_value, 4)}</td>
                         </tr>`;
               } else {
