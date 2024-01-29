@@ -20,6 +20,11 @@
     <img src="/static/logo.png" alt="Logo" class="logo">
     <h1 class="mt-3 mb-5 text-center">Ask me anything about LangCheck!</h1>
 
+    {% if enable_local_models %}
+      <div class="alert alert-secondary" role="alert">
+        When local LangCheck models are enabled, the first query after starting up the app may take a long time since the models need to first be downloaded. Subsequent queries should be much faster. Restarting the app with <code>ENABLE_LOCAL_LANGCHECK_MODELS = 'False'</code> in your <code>.env</code> file will also make the app faster.
+      </div>
+    {% endif %}
     <div class="mb-2 d-inline-block" data-toggle="tooltip" data-placement="right" title="Set the language of the LangCheck metrics used to evaluate the LLM response.">
       <span style="font-size: 0.875rem;">Language:</span>
       <select id="language-toggle" class="custom-select custom-select-sm" style="width: 100px;">

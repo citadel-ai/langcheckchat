@@ -14,12 +14,6 @@ from rag import RAG
 api_routes_blueprint = Blueprint('api', __name__)
 load_dotenv()
 
-# initalize factual consistency
-if os.environ['ENABLE_LOCAL_LANGCHECK_MODELS'] == 'True':
-    print('Computing factual consistency..')
-    print(langcheck.metrics.factual_consistency("I'm Bob", "I'm Bob"))
-    print(langcheck.metrics.ja.factual_consistency("僕はボブ", "僕はボブ"))
-
 # Initialize the RAG system
 rag_system = RAG()
 
