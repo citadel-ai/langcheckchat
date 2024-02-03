@@ -205,27 +205,23 @@ function updateMetrics(id) {
         } else {
           continue;
         }
-        var metricTableHTML = ''
-        if (data[metricName]['explanation'] !== null) {
-          metricTableHTML += `
-            <tr>
-              <td id=${metricName}>${metricName}
-                <span class="ml-2 d-none" data-html="true" data-toggle="tooltip" data-placement="top">
-                  <span data-feather="help-circle"></span>
-                </span>
-              </td>
-          `;
-        } else {
-          metricTableHTML += `<tr><td>${metricName}</td>`;
-        }
-        if (!isNaN(data[metricName]['metric_value']) &&
+        // Add a header cell for the metrics table
+        var metricRowHTML = (data[metricName]['explanation'] !== null) ? 
+          `<tr>
+            <td id=${metricName}>${metricName}
+              <span class="ml-2 d-none" data-html="true" data-toggle="tooltip" data-placement="top">
+                <span data-feather="help-circle"></span>
+              </span>
+            </td>` : 
+          `<tr><td>${metricName}</td>`;
+
+        // Add a data cell for the metrics table
+        metricRowHTML += (!isNaN(data[metricName]['metric_value']) &&
           (metricInfo.direction === 'low' && value > metricInfo.threshold) ||
-          (metricInfo.direction === 'high' && value < metricInfo.threshold)) {
-            metricTableHTML += `<td class="bg-danger text-white">${round(value, 4)}</td></tr>`;
-        } else {
-          metricTableHTML += `<td>${round(value, 4)}</td></tr>`;
-        }
-        $(metricTableID + ' tbody').append(metricTableHTML)
+          (metricInfo.direction === 'high' && value < metricInfo.threshold)) ? 
+          `<td class="bg-danger text-white">${round(value, 4)}</td></tr>` :
+          `<td>${round(value, 4)}</td></tr>`
+        $(metricTableID + ' tbody').append(metricRowHTML)
       }
 
       if (data.status === 'done') {
