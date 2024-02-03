@@ -148,35 +148,35 @@ function generateAnswerRow(answer, factualConsistencyScore, warning) {
   `;
 }
 
-const REFERENCE_FREE_METRICS = [
-  'request_toxicity',
-  'request_toxicity_openai',
-  'response_toxicity',
-  'response_toxicity_openai',
-  'request_sentiment',
-  'request_sentiment_openai',
-  'response_sentiment',
-  'response_sentiment_openai',
-  'request_fluency',
-  'request_fluency_openai',
-  'response_fluency',
-  'response_fluency_openai',
-  'request_readability',
-  'response_readability',
-  'ai_disclaimer_similarity'
-];
+const REFERENCE_FREE_METRICS = {
+  'request_toxicity': { threshold: 0.5, direction: "low"},
+  'request_toxicity_openai': { threshold: 0.5, direction: "low"},
+  'response_toxicity': { threshold: 0.5, direction: "low"},
+  'response_toxicity_openai': { threshold: 0.5, direction: "low"},
+  'request_sentiment': { threshold: 0.5, direction: "low"},
+  'request_sentiment_openai': { threshold: 0.5, direction: "low"},
+  'response_sentiment': { threshold: 0.5, direction: "high"},
+  'response_sentiment_openai': { threshold: 0.5, direction: "high"},
+  'request_fluency': { threshold: 0.5, direction: "high"},
+  'request_fluency_openai': { threshold: 0.5, direction: "high"},
+  'response_fluency': { threshold: 0.5, direction: "high"},
+  'response_fluency_openai': { threshold: 0.5, direction: "high"},
+  'request_readability': { threshold: 0, direction: "high"},
+  'response_readability': { threshold: 0, direction: "high"},
+  'ai_disclaimer_similarity': { threshold: 0.5, direction: "high"},
+};
 
-const SOURCE_BASED_METRICS = [
-  'factual_consistency',
-  'factual_consistency_openai'
-];
+const SOURCE_BASED_METRICS = {
+  'factual_consistency': { threshold: 0.5, direction: "high"},
+  'factual_consistency_openai': { threshold: 0.5, direction: "high"},
+};
 
-const REFERENCE_BASED_METRICS = [
-  'rouge1',
-  'rouge2',
-  'rougeL',
-  'semantic_similarity'
-];
+const REFERENCE_BASED_METRICS = {
+  'rouge1': { threshold: 0.5, direction: "high"},
+  'rouge2': { threshold: 0.5, direction: "high"},
+  'rougeL': { threshold: 0.5, direction: "high"},
+  'semantic_similarity': { threshold: 0.5, direction: "high"},
+};
 function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
@@ -192,29 +192,40 @@ function updateMetrics(id) {
         }
         let value = data[metricName]['metric_value'] !== null ? data[metricName]['metric_value'] : '<div class="spinner-border spinner-border-sm"></div>';
         let metricTableID = ''
-        if (REFERENCE_FREE_METRICS.includes(metricName)) {
+        let metricInfo = {};
+        if (Object.keys(REFERENCE_FREE_METRICS).includes(metricName)) {
           metricTableID = '#reference-free-metrics-table';
-        } else if (SOURCE_BASED_METRICS.includes(metricName)) {
+          metricInfo = REFERENCE_FREE_METRICS[metricName];
+        } else if (Object.keys(SOURCE_BASED_METRICS).includes(metricName)) {
           metricTableID = '#source-based-metrics-table';
-        } else if (REFERENCE_BASED_METRICS.includes(metricName)) {
+          metricInfo = SOURCE_BASED_METRICS[metricName];
+        } else if (Object.keys(REFERENCE_BASED_METRICS).includes(metricName)) {
           metricTableID = '#reference-based-metrics-table';
+          metricInfo = REFERENCE_BASED_METRICS[metricName];
         } else {
           continue;
         }
+        var metricTableHTML = ''
         if (data[metricName]['explanation'] !== null) {
-          $(metricTableID + ' tbody').append(`
+          metricTableHTML += `
             <tr>
               <td id=${metricName}>${metricName}
                 <span class="ml-2 d-none" data-html="true" data-toggle="tooltip" data-placement="top">
                   <span data-feather="help-circle"></span>
                 </span>
               </td>
-              <td>${round(value, 4)}</td>
-            </tr>
-          `);
+          `;
         } else {
-          $(metricTableID + ' tbody').append(`<tr><td>${metricName}</td><td>${round(value, 4)}</td></tr>`);
+          metricTableHTML += `<tr><td>${metricName}</td>`;
         }
+        if (!isNaN(data[metricName]['metric_value']) &&
+          (metricInfo.direction === 'low' && value > metricInfo.threshold) ||
+          (metricInfo.direction === 'high' && value < metricInfo.threshold)) {
+            metricTableHTML += `<td class="bg-danger text-white">${round(value, 4)}</td></tr>`;
+        } else {
+          metricTableHTML += `<td>${round(value, 4)}</td></tr>`;
+        }
+        $(metricTableID + ' tbody').append(metricTableHTML)
       }
 
       if (data.status === 'done') {
