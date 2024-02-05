@@ -163,7 +163,7 @@ const REFERENCE_FREE_METRICS = {
   'response_fluency_openai': { threshold: 0.5, direction: "high"},
   'request_readability': { threshold: 0, direction: "high"},
   'response_readability': { threshold: 0, direction: "high"},
-  'ai_disclaimer_similarity': { threshold: 0.5, direction: "high"},
+  'ai_disclaimer_similarity': { threshold: 0.5, direction: "low"},
 };
 
 const SOURCE_BASED_METRICS = {
