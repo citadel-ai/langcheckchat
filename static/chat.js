@@ -154,7 +154,7 @@ const REFERENCE_FREE_METRICS = {
   'response_toxicity': { threshold: 0.5, direction: "low"},
   'response_toxicity_openai': { threshold: 0.5, direction: "low"},
   'request_sentiment': { threshold: 0.5, direction: "low"},
-  'request_sentiment_openai': { threshold: 0.5, direction: "low"},
+  'request_sentiment_openai': { threshold: 0.5, direction: "high"},
   'response_sentiment': { threshold: 0.5, direction: "high"},
   'response_sentiment_openai': { threshold: 0.5, direction: "high"},
   'request_fluency': { threshold: 0.5, direction: "high"},
