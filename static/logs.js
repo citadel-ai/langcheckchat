@@ -26,7 +26,11 @@ function loadLogs(direction) {
                           <td>${round(metricData.metric_value, 4)}</td>
                         </tr>`;
               } else {
-                return `<tr><td>${metricName}</td><td>${round(metricData.metric_value, 4)}</td></tr>`;
+                if (thresholdExceeded(metricName, metricData.metric_value)) {
+                    return `<tr><td>${metricName}</td><td class="bg-danger text-white">${round(metricData.metric_value, 4)}</td></tr>`;
+                } else {
+                  return `<tr><td>${metricName}</td><td>${round(metricData.metric_value, 4)}</td></tr>`;
+                }
               }
             });
             const metricsTable = `<table class="table table-bordered table-hover" id="metrics-table">

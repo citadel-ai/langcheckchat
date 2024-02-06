@@ -148,35 +148,6 @@ function generateAnswerRow(answer, factualConsistencyScore, warning) {
   `;
 }
 
-const REFERENCE_FREE_METRICS = {
-  'request_toxicity': { threshold: 0.5, direction: "low"},
-  'request_toxicity_openai': { threshold: 0.5, direction: "low"},
-  'response_toxicity': { threshold: 0.5, direction: "low"},
-  'response_toxicity_openai': { threshold: 0.5, direction: "low"},
-  'request_sentiment': { threshold: 0.5, direction: "high"},
-  'request_sentiment_openai': { threshold: 0.5, direction: "high"},
-  'response_sentiment': { threshold: 0.5, direction: "high"},
-  'response_sentiment_openai': { threshold: 0.5, direction: "high"},
-  'request_fluency': { threshold: 0.5, direction: "high"},
-  'request_fluency_openai': { threshold: 0.5, direction: "high"},
-  'response_fluency': { threshold: 0.5, direction: "high"},
-  'response_fluency_openai': { threshold: 0.5, direction: "high"},
-  'request_readability': { threshold: 10, direction: "high"},
-  'response_readability': { threshold: 10, direction: "high"},
-  'ai_disclaimer_similarity': { threshold: 0.5, direction: "low"},
-};
-
-const SOURCE_BASED_METRICS = {
-  'factual_consistency': { threshold: 0.5, direction: "high"},
-  'factual_consistency_openai': { threshold: 0.5, direction: "high"},
-};
-
-const REFERENCE_BASED_METRICS = {
-  'rouge1': { threshold: 0.5, direction: "high"},
-  'rouge2': { threshold: 0.5, direction: "high"},
-  'rougeL': { threshold: 0.5, direction: "high"},
-  'semantic_similarity': { threshold: 0.5, direction: "high"},
-};
 function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
@@ -191,16 +162,12 @@ function updateMetrics(id) {
           continue;
         }
         let metricTableID = ''
-        let metricInfo = {};
         if (Object.keys(REFERENCE_FREE_METRICS).includes(metricName)) {
           metricTableID = '#reference-free-metrics-table';
-          metricInfo = REFERENCE_FREE_METRICS[metricName];
         } else if (Object.keys(SOURCE_BASED_METRICS).includes(metricName)) {
           metricTableID = '#source-based-metrics-table';
-          metricInfo = SOURCE_BASED_METRICS[metricName];
         } else if (Object.keys(REFERENCE_BASED_METRICS).includes(metricName)) {
           metricTableID = '#reference-based-metrics-table';
-          metricInfo = REFERENCE_BASED_METRICS[metricName];
         } else {
           continue;
         }
@@ -216,8 +183,7 @@ function updateMetrics(id) {
 
         // Add a data cell for the metrics table
         if (data[metricName]['metric_value'] !== null) {
-          if ((metricInfo.direction === 'low' && data[metricName]['metric_value'] > metricInfo.threshold) ||
-            (metricInfo.direction === 'high' && data[metricName]['metric_value'] < metricInfo.threshold)) {
+          if (thresholdExceeded(metricName, data[metricName]['metric_value'])) {
               metricRowHTML += `<td class="bg-danger text-white">${round(data[metricName]['metric_value'], 4)}</td></tr>`;
           } else {
             metricRowHTML += `<td>${round(data[metricName]['metric_value'], 4)}</td></tr>`;
