@@ -190,7 +190,6 @@ function updateMetrics(id) {
         if (metricName === "status") {
           continue;
         }
-        let value = data[metricName]['metric_value'] !== null ? data[metricName]['metric_value'] : '<div class="spinner-border spinner-border-sm"></div>';
         let metricTableID = ''
         let metricInfo = {};
         if (Object.keys(REFERENCE_FREE_METRICS).includes(metricName)) {
@@ -216,11 +215,16 @@ function updateMetrics(id) {
           `<tr><td>${metricName}</td>`;
 
         // Add a data cell for the metrics table
-        metricRowHTML += (!isNaN(data[metricName]['metric_value']) &&
-          (metricInfo.direction === 'low' && value > metricInfo.threshold) ||
-          (metricInfo.direction === 'high' && value < metricInfo.threshold)) ? 
-          `<td class="bg-danger text-white">${round(value, 4)}</td></tr>` :
-          `<td>${round(value, 4)}</td></tr>`
+        if (data[metricName]['metric_value'] !== null) {
+          if ((metricInfo.direction === 'low' && data[metricName]['metric_value'] > metricInfo.threshold) ||
+            (metricInfo.direction === 'high' && data[metricName]['metric_value'] < metricInfo.threshold)) {
+              metricRowHTML += `<td class="bg-danger text-white">${round(data[metricName]['metric_value'], 4)}</td></tr>`;
+          } else {
+            metricRowHTML += `<td>${round(data[metricName]['metric_value'], 4)}</td></tr>`;
+          }
+        } else {
+          metricRowHTML += `<td><div class="spinner-border spinner-border-sm"></div></td></tr>`;
+        }
         $(metricTableID + ' tbody').append(metricRowHTML)
       }
 
