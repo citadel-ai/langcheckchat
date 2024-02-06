@@ -206,7 +206,7 @@ function updateMetrics(id) {
           continue;
         }
         // Add a header cell for the metrics table
-        var metricRowHTML = (data[metricName]['explanation'] !== null) ? 
+        let metricRowHTML = (data[metricName]['explanation'] !== null) ? 
           `<tr>
             <td id=${metricName}>${metricName}
               <span class="ml-2 d-none" data-html="true" data-toggle="tooltip" data-placement="top">
