@@ -148,35 +148,6 @@ function generateAnswerRow(answer, factualConsistencyScore, warning) {
   `;
 }
 
-const REFERENCE_FREE_METRICS = [
-  'request_toxicity',
-  'request_toxicity_openai',
-  'response_toxicity',
-  'response_toxicity_openai',
-  'request_sentiment',
-  'request_sentiment_openai',
-  'response_sentiment',
-  'response_sentiment_openai',
-  'request_fluency',
-  'request_fluency_openai',
-  'response_fluency',
-  'response_fluency_openai',
-  'request_readability',
-  'response_readability',
-  'ai_disclaimer_similarity'
-];
-
-const SOURCE_BASED_METRICS = [
-  'factual_consistency',
-  'factual_consistency_openai'
-];
-
-const REFERENCE_BASED_METRICS = [
-  'rouge1',
-  'rouge2',
-  'rougeL',
-  'semantic_similarity'
-];
 function updateMetrics(id) {
   $.get(`/api/metrics/${id}`)
     .then(function (data) {
@@ -190,31 +161,38 @@ function updateMetrics(id) {
         if (metricName === "status") {
           continue;
         }
-        let value = data[metricName]['metric_value'] !== null ? data[metricName]['metric_value'] : '<div class="spinner-border spinner-border-sm"></div>';
         let metricTableID = ''
-        if (REFERENCE_FREE_METRICS.includes(metricName)) {
+        if (Object.keys(REFERENCE_FREE_METRICS).includes(metricName)) {
           metricTableID = '#reference-free-metrics-table';
-        } else if (SOURCE_BASED_METRICS.includes(metricName)) {
+        } else if (Object.keys(SOURCE_BASED_METRICS).includes(metricName)) {
           metricTableID = '#source-based-metrics-table';
-        } else if (REFERENCE_BASED_METRICS.includes(metricName)) {
+        } else if (Object.keys(REFERENCE_BASED_METRICS).includes(metricName)) {
           metricTableID = '#reference-based-metrics-table';
         } else {
           continue;
         }
-        if (data[metricName]['explanation'] !== null) {
-          $(metricTableID + ' tbody').append(`
-            <tr>
-              <td id=${metricName}>${metricName}
-                <span class="ml-2 d-none" data-html="true" data-toggle="tooltip" data-placement="top">
-                  <span data-feather="help-circle"></span>
-                </span>
-              </td>
-              <td>${round(value, 4)}</td>
-            </tr>
-          `);
+        // First, add the HTML for the metric name to the row
+        let metricRowHTML = (data[metricName]['explanation'] !== null) ?
+          `<tr>
+            <td id=${metricName}>${metricName}
+              <span class="ml-2 d-none" data-html="true" data-toggle="tooltip" data-placement="top">
+                <span data-feather="help-circle"></span>
+              </span>
+            </td>` :
+          `<tr><td>${metricName}</td>`;
+
+        // Then, add the HTML for the metric value to the row
+        if (data[metricName]['metric_value'] !== null) {
+          if (thresholdExceeded(metricName, data[metricName]['metric_value'])) {
+              metricRowHTML += `<td class="bg-danger text-white">${round(data[metricName]['metric_value'], 4)}</td></tr>`;
+          } else {
+            metricRowHTML += `<td>${round(data[metricName]['metric_value'], 4)}</td></tr>`;
+          }
         } else {
-          $(metricTableID + ' tbody').append(`<tr><td>${metricName}</td><td>${round(value, 4)}</td></tr>`);
+          metricRowHTML += `<td><div class="spinner-border spinner-border-sm"></div></td></tr>`;
         }
+
+        $(metricTableID + ' tbody').append(metricRowHTML)
       }
 
       if (data.status === 'done') {

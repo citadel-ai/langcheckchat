@@ -15,6 +15,17 @@ function loadLogs(direction) {
             // {'metric_value': value, 'explanation': explanation}. We iterate
             // over this object and construct the rows of the table.
             const metricRows = Object.entries(log.metrics).map(([metricName, metricData]) => {
+              // HTML for the metric value. If the metric value exceeds the
+              // threshold, we highlight it in red.
+              let metricValueHtml;
+              if (thresholdExceeded(metricName, metricData.metric_value)) {
+                metricValueHtml = `<td class="bg-danger text-white">${round(metricData.metric_value, 4)}</td>`;
+              } else {
+                metricValueHtml = `<td>${round(metricData.metric_value, 4)}</td>`;
+              }
+
+              // If the metric has an explanation, we add a help icon to the
+              // metric name which shows the explanation on hover.
               if (metricData.explanation !== null) {
                 const title = escapeHTML(metricData.explanation);
                 return `<tr>
@@ -23,10 +34,10 @@ function loadLogs(direction) {
                               <span data-feather="help-circle"></span>
                             </span>
                           </td>
-                          <td>${round(metricData.metric_value, 4)}</td>
+                          ${metricValueHtml}
                         </tr>`;
               } else {
-                return `<tr><td>${metricName}</td><td>${round(metricData.metric_value, 4)}</td></tr>`;
+                return `<tr><td>${metricName}</td>${metricValueHtml}</tr>`;
               }
             });
             const metricsTable = `<table class="table table-bordered table-hover" id="metrics-table">
