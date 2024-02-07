@@ -171,17 +171,17 @@ function updateMetrics(id) {
         } else {
           continue;
         }
-        // Add a header cell for the metrics table
-        let metricRowHTML = (data[metricName]['explanation'] !== null) ? 
+        // First, add the HTML for the metric name to the row
+        let metricRowHTML = (data[metricName]['explanation'] !== null) ?
           `<tr>
             <td id=${metricName}>${metricName}
               <span class="ml-2 d-none" data-html="true" data-toggle="tooltip" data-placement="top">
                 <span data-feather="help-circle"></span>
               </span>
-            </td>` : 
+            </td>` :
           `<tr><td>${metricName}</td>`;
 
-        // Add a data cell for the metrics table
+        // Then, add the HTML for the metric value to the row
         if (data[metricName]['metric_value'] !== null) {
           if (thresholdExceeded(metricName, data[metricName]['metric_value'])) {
               metricRowHTML += `<td class="bg-danger text-white">${round(data[metricName]['metric_value'], 4)}</td></tr>`;
@@ -191,6 +191,7 @@ function updateMetrics(id) {
         } else {
           metricRowHTML += `<td><div class="spinner-border spinner-border-sm"></div></td></tr>`;
         }
+
         $(metricTableID + ' tbody').append(metricRowHTML)
       }
 
