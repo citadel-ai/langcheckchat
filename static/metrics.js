@@ -1,31 +1,31 @@
 const REFERENCE_FREE_METRICS = {
-  'request_toxicity': { threshold: 0.5, direction: "low"},
-  'request_toxicity_openai': { threshold: 0.5, direction: "low"},
-  'response_toxicity': { threshold: 0.5, direction: "low"},
-  'response_toxicity_openai': { threshold: 0.5, direction: "low"},
-  'request_sentiment': { threshold: 0.5, direction: "high"},
-  'request_sentiment_openai': { threshold: 0.5, direction: "high"},
-  'response_sentiment': { threshold: 0.5, direction: "high"},
-  'response_sentiment_openai': { threshold: 0.5, direction: "high"},
-  'request_fluency': { threshold: 0.5, direction: "high"},
-  'request_fluency_openai': { threshold: 0.5, direction: "high"},
-  'response_fluency': { threshold: 0.5, direction: "high"},
-  'response_fluency_openai': { threshold: 0.5, direction: "high"},
-  'request_readability': { threshold: 10, direction: "high"},
-  'response_readability': { threshold: 10, direction: "high"},
-  'ai_disclaimer_similarity': { threshold: 0.5, direction: "low"},
+  'request_toxicity': { threshold: 0.5, direction: 'low'},
+  'request_toxicity_openai': { threshold: 0.5, direction: 'low'},
+  'response_toxicity': { threshold: 0.5, direction: 'low'},
+  'response_toxicity_openai': { threshold: 0.5, direction: 'low'},
+  'request_sentiment': { threshold: 0.5, direction: 'high'},
+  'request_sentiment_openai': { threshold: 0.5, direction: 'high'},
+  'response_sentiment': { threshold: 0.5, direction: 'high'},
+  'response_sentiment_openai': { threshold: 0.5, direction: 'high'},
+  'request_fluency': { threshold: 0.5, direction: 'high'},
+  'request_fluency_openai': { threshold: 0.5, direction: 'high'},
+  'response_fluency': { threshold: 0.5, direction: 'high'},
+  'response_fluency_openai': { threshold: 0.5, direction: 'high'},
+  'request_readability': { threshold: 10, direction: 'high'},
+  'response_readability': { threshold: 10, direction: 'high'},
+  'ai_disclaimer_similarity': { threshold: 0.5, direction: 'low'},
 };
 
 const SOURCE_BASED_METRICS = {
-  'factual_consistency': { threshold: 0.5, direction: "high"},
-  'factual_consistency_openai': { threshold: 0.5, direction: "high"},
+  'factual_consistency': { threshold: 0.5, direction: 'high'},
+  'factual_consistency_openai': { threshold: 0.5, direction: 'high'},
 };
 
 const REFERENCE_BASED_METRICS = {
-  'rouge1': { threshold: 0.5, direction: "high"},
-  'rouge2': { threshold: 0.5, direction: "high"},
-  'rougeL': { threshold: 0.5, direction: "high"},
-  'semantic_similarity': { threshold: 0.5, direction: "high"},
+  'rouge1': { threshold: 0.5, direction: 'high'},
+  'rouge2': { threshold: 0.5, direction: 'high'},
+  'rougeL': { threshold: 0.5, direction: 'high'},
+  'semantic_similarity': { threshold: 0.5, direction: 'high'},
 };
 
 function thresholdExceeded(metricName, metricValue) {
