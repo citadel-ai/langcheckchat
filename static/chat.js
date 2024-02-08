@@ -127,11 +127,15 @@ function generateAnswerRow(answer, factualConsistencyScore, warning) {
     warning_text = '<div class="text-danger mb-4">Warning: possible hallucination detected.</div>'
   }
 
+  // Convert Markdown to HTML, since OpenAI's answers are often in Markdown
+  // format
+  const answerHtml = marked.parse(answer);
+
   return `
     <div class="qa-block">
       ${warning_text}
       <span class="text-success" style="font-weight: 500;">Answer: </span>
-      ${answer}
+      ${answerHtml}
       <br>
       ${
         warning
