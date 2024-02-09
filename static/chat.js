@@ -136,7 +136,7 @@ function generateAnswerRow(answer, factualConsistencyScore, warning) {
       ${warning_text}
       <span class="text-success" style="font-weight: 500;">Answer: </span>
       ${answerHtml}
-      <br>
+      
       ${
         warning
         ?
