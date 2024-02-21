@@ -14,11 +14,13 @@ const REFERENCE_FREE_METRICS = {
   'request_readability': { threshold: 10, direction: 'high'},
   'response_readability': { threshold: 10, direction: 'high'},
   'ai_disclaimer_similarity': { threshold: 0.5, direction: 'low'},
+  'answer_relevance_openai': { threshold: 0.5, direction: 'high'},
 };
 
 const SOURCE_BASED_METRICS = {
   'factual_consistency': { threshold: 0.5, direction: 'high'},
   'factual_consistency_openai': { threshold: 0.5, direction: 'high'},
+  'context_relevance_openai': { threshold: 0.5, direction: 'high'},
 };
 
 const REFERENCE_BASED_METRICS = {

@@ -151,6 +151,14 @@ def main(log_id):
                    langcheck.metrics.ja.factual_consistency,
                    [response, source], False, True))
     metrics_to_compute.append(
+        Metric('context_relevance', langcheck.metrics.context_relevance,
+               langcheck.metrics.ja.context_relevance, [source, request],
+               False, True))
+    metrics_to_compute.append(
+        Metric('answer_relevance', langcheck.metrics.answer_relevance,
+               langcheck.metrics.ja.answer_relevance, [response, request],
+               False, True))
+    metrics_to_compute.append(
         Metric('request_toxicity', langcheck.metrics.toxicity,
                langcheck.metrics.ja.toxicity, [request], enable_local, True))
     metrics_to_compute.append(
