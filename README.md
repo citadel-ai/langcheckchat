@@ -5,7 +5,7 @@ evaluates its own responses using LangCheck metrics.
 
 ## Demo
 
-https://github.com/citadel-ai/langcheckchat/assets/107823399/1ff5cdc0-fbf3-4317-9877-bea4bac2401e
+https://github.com/citadel-ai/langcheckchat/assets/107823399/17eb008e-b34e-4cd8-a0b9-f862f51eeef4
 
 ## Installation
 
