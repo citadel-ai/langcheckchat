@@ -5,10 +5,7 @@ evaluates its own responses using LangCheck metrics.
 
 ## Demo
 
-<video width="320" height="240" controls>
-    <source src="static/en_demo.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-</video>
+https://github.com/citadel-ai/langcheckchat/assets/107823399/1ff5cdc0-fbf3-4317-9877-bea4bac2401e
 
 ## Installation
 
