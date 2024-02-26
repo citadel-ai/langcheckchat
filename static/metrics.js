@@ -11,8 +11,8 @@ const REFERENCE_FREE_METRICS = {
   'request_fluency_openai': { threshold: 0.5, direction: 'high'},
   'response_fluency': { threshold: 0.5, direction: 'high'},
   'response_fluency_openai': { threshold: 0.5, direction: 'high'},
-  'request_readability': { threshold: 10, direction: 'high'},
-  'response_readability': { threshold: 10, direction: 'high'},
+  'request_readability': { threshold: null, direction: null},
+  'response_readability': { threshold: null, direction: null},
   'ai_disclaimer_similarity': { threshold: 0.5, direction: 'low'},
   'answer_relevance_openai': { threshold: 0.5, direction: 'high'},
 };
