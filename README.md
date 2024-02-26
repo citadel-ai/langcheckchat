@@ -5,7 +5,10 @@ evaluates its own responses using LangCheck metrics.
 
 ## Demo
 
-TODO: Insert a video
+<video width="320" height="240" controls>
+    <source src="static/en_demo.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
 
 ## Installation
 
