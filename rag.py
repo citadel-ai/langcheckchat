@@ -3,11 +3,14 @@ import os
 import pickle
 
 from dotenv import load_dotenv
-from llama_index import (GPTVectorStoreIndex, ServiceContext, download_loader,
-                         set_global_service_context)
-from llama_index.embeddings import AzureOpenAIEmbedding, OpenAIEmbedding
-from llama_index.llms import AzureOpenAI, OpenAI
-from llama_index.readers import SimpleWebPageReader, StringIterableReader
+from llama_index.core import (GPTVectorStoreIndex, ServiceContext,
+                              download_loader, set_global_service_context)
+from llama_index.core.readers import StringIterableReader
+from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.llms.azure_openai import AzureOpenAI
+from llama_index.llms.openai import OpenAI
+from llama_index.readers.web import SimpleWebPageReader
 
 SAVED_DOCUMENTS = 'docs.pkl'
 

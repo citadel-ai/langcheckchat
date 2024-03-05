@@ -1,6 +1,8 @@
 Flask
 python-dotenv
-llama_index
+llama-index
+llama-index-embeddings-azure-openai
+llama-index-readers-web
 llama-cpp-python
 torch==2.0.1
 transformers
