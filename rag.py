@@ -1,13 +1,19 @@
 import json
 import os
 import pickle
+import tempfile
+from pathlib import Path
 
 from dotenv import load_dotenv
-from llama_index import (GPTVectorStoreIndex, ServiceContext, download_loader,
-                         set_global_service_context)
-from llama_index.embeddings import AzureOpenAIEmbedding, OpenAIEmbedding
-from llama_index.llms import AzureOpenAI, OpenAI
-from llama_index.readers import SimpleWebPageReader, StringIterableReader
+from llama_index.core import (GPTVectorStoreIndex, ServiceContext,
+                              set_global_service_context)
+from llama_index.core.readers import StringIterableReader
+from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.llms.azure_openai import AzureOpenAI
+from llama_index.llms.openai import OpenAI
+from llama_index.readers.file import MarkdownReader
+from llama_index.readers.web import SimpleWebPageReader
 
 SAVED_DOCUMENTS = 'docs.pkl'
 
@@ -93,14 +99,17 @@ class RAG:
         ]
         documents = loader.load_data(urls=pages)
 
-        MarkdownReader = download_loader("MarkdownReader")
         markdown_loader = MarkdownReader()
         markdown_strs = []
         for document in documents:
-            markdown_docs = markdown_loader.load_data(file=None,
-                                                      content=document.text)
-            markdown_strs.append('\n'.join(
-                [mdoc.text for mdoc in markdown_docs]))
+            # Create a temporary Markdown file so that it can be loaded by the
+            # MarkdownReader
+            with tempfile.NamedTemporaryFile(delete=True) as temp:
+                temp.write(document.text.encode())
+                temp.flush()  # Ensure the file is written to disk
+                markdown_docs = markdown_loader.load_data(file=Path(temp.name))
+                markdown_strs.append('\n'.join(
+                    [mdoc.text for mdoc in markdown_docs]))
 
         documents = StringIterableReader().load_data(markdown_strs)
         with open(SAVED_DOCUMENTS, 'wb') as f:
