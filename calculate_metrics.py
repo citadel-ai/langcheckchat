@@ -39,11 +39,10 @@ def add_init_to_db(request, response, source, language, score, explanation,
 
 class Metric:
 
-    def __init__(self, metric_name, metric_fn, metric_fn_jp, args,
-                 compute_local, compute_openai):
+    def __init__(self, metric_name, metric_fns, args, compute_local,
+                 compute_openai):
         self.metric_name = metric_name
-        self.metric_fn = metric_fn
-        self.metric_fn_jp = metric_fn_jp
+        self.metric_fns = metric_fns
         self.args = args
         self.compute_local = compute_local
         self.compute_openai = compute_openai
@@ -61,12 +60,14 @@ class Metric:
                 log_id, f"{self.metric_name}_openai", None, None)
 
     def compute_local_metric(self, language):
-        metric_fn = self.metric_fn if language == 'en' else self.metric_fn_jp
+        assert language in self.metric_fns
+        metric_fn = self.metric_fns[language]
         metric_result = metric_fn(*self.args)
         return metric_result.metric_values[0]
 
     def compute_openai_metric(self, language):
-        metric_fn = self.metric_fn if language == 'en' else self.metric_fn_jp
+        assert language in self.metric_fns
+        metric_fn = self.metric_fns[language]
         assert os.environ['LANGCHECK_OPENAI_API_TYPE'] in ['openai', 'azure']
         if os.environ['LANGCHECK_OPENAI_API_TYPE'] == 'azure':
             model_type = 'azure_openai'
@@ -105,13 +106,15 @@ def get_factual_consistency(response, source,
         # TODO: Remove this once the problem is fixed in langcheck package
         if len(source) >= 512:
             first_factual_consistency_metric = Metric(
-                'factual_consistency', langcheck.metrics.factual_consistency,
-                langcheck.metrics.ja.factual_consistency,
-                [response, source[:len(source) // 2]], True, False)
+                'factual_consistency', {
+                    'en': langcheck.metrics.factual_consistency,
+                    'ja': langcheck.metrics.ja.factual_consistency
+                }, [response, source[:len(source) // 2]], True, False)
             second_factual_consistency_metric = Metric(
-                'factual_consistency', langcheck.metrics.factual_consistency,
-                langcheck.metrics.ja.factual_consistency,
-                [response, source[len(source) // 2:]], True, False)
+                'factual_consistency', {
+                    'en': langcheck.metrics.factual_consistency,
+                    'ja': langcheck.metrics.ja.factual_consistency
+                }, [response, source[len(source) // 2:]], True, False)
             first_score = first_factual_consistency_metric.compute_local_metric(
                 language)
             second_score = second_factual_consistency_metric.compute_local_metric(
@@ -120,16 +123,18 @@ def get_factual_consistency(response, source,
 
     if use_local:
         factual_consistency_metric = Metric(
-            'factual_consistency', langcheck.metrics.factual_consistency,
-            langcheck.metrics.ja.factual_consistency, [response, source], True,
-            False)
+            'factual_consistency', {
+                'en': langcheck.metrics.factual_consistency,
+                'ja': langcheck.metrics.ja.factual_consistency
+            }, [response, source], True, False)
         return factual_consistency_metric.compute_local_metric(language), None
 
     else:
         factual_consistency_metric = Metric(
-            'factual_consistency', langcheck.metrics.factual_consistency,
-            langcheck.metrics.ja.factual_consistency, [response, source],
-            False, True)
+            'factual_consistency', {
+                'en': langcheck.metrics.factual_consistency,
+                'ja': langcheck.metrics.ja.factual_consistency
+            }, [response, source], False, True)
         return factual_consistency_metric.compute_openai_metric(language)
 
 
@@ -146,50 +151,74 @@ def main(log_id):
         # If the local version of factual consistency was computed first, we
         # need to now compute the OpenAI version
         metrics_to_compute.append(
-            Metric('factual_consistency',
-                   langcheck.metrics.factual_consistency,
-                   langcheck.metrics.ja.factual_consistency,
-                   [response, source], False, True))
+            Metric(
+                'factual_consistency', {
+                    'en': langcheck.metrics.factual_consistency,
+                    'ja': langcheck.metrics.ja.factual_consistency
+                }, [response, source], False, True))
     metrics_to_compute.append(
-        Metric('context_relevance', langcheck.metrics.context_relevance,
-               langcheck.metrics.ja.context_relevance, [source, request],
-               False, True))
+        Metric(
+            'context_relevance', {
+                'en': langcheck.metrics.context_relevance,
+                'ja': langcheck.metrics.ja.context_relevance
+            }, [source, request], False, True))
     metrics_to_compute.append(
-        Metric('answer_relevance', langcheck.metrics.answer_relevance,
-               langcheck.metrics.ja.answer_relevance, [response, request],
-               False, True))
+        Metric(
+            'answer_relevance', {
+                'en': langcheck.metrics.answer_relevance,
+                'ja': langcheck.metrics.ja.answer_relevance
+            }, [response, request], False, True))
     metrics_to_compute.append(
-        Metric('request_toxicity', langcheck.metrics.toxicity,
-               langcheck.metrics.ja.toxicity, [request], enable_local, True))
+        Metric('request_toxicity', {
+            'en': langcheck.metrics.toxicity,
+            'ja': langcheck.metrics.ja.toxicity
+        }, [request], enable_local, True))
     metrics_to_compute.append(
-        Metric('response_toxicity', langcheck.metrics.toxicity,
-               langcheck.metrics.ja.toxicity, [response], enable_local, True))
+        Metric('response_toxicity', {
+            'en': langcheck.metrics.toxicity,
+            'ja': langcheck.metrics.ja.toxicity
+        }, [response], enable_local, True))
     metrics_to_compute.append(
-        Metric('request_sentiment', langcheck.metrics.sentiment,
-               langcheck.metrics.ja.sentiment, [request], enable_local, True))
+        Metric(
+            'request_sentiment', {
+                'en': langcheck.metrics.sentiment,
+                'ja': langcheck.metrics.ja.sentiment
+            }, [request], enable_local, True))
     metrics_to_compute.append(
-        Metric('response_sentiment', langcheck.metrics.sentiment,
-               langcheck.metrics.ja.sentiment, [response], enable_local, True))
+        Metric(
+            'response_sentiment', {
+                'en': langcheck.metrics.sentiment,
+                'ja': langcheck.metrics.ja.sentiment
+            }, [response], enable_local, True))
     metrics_to_compute.append(
-        Metric('request_fluency', langcheck.metrics.fluency,
-               langcheck.metrics.ja.fluency, [request], enable_local, True))
+        Metric('request_fluency', {
+            'en': langcheck.metrics.fluency,
+            'ja': langcheck.metrics.ja.fluency
+        }, [request], enable_local, True))
     metrics_to_compute.append(
-        Metric('response_fluency', langcheck.metrics.fluency,
-               langcheck.metrics.ja.fluency, [response], enable_local, True))
+        Metric('response_fluency', {
+            'en': langcheck.metrics.fluency,
+            'ja': langcheck.metrics.ja.fluency
+        }, [response], enable_local, True))
     metrics_to_compute.append(
-        Metric('request_readability', langcheck.metrics.flesch_reading_ease,
-               langcheck.metrics.ja.tateishi_ono_yamada_reading_ease,
-               [request], True, False))
+        Metric(
+            'request_readability', {
+                'en': langcheck.metrics.flesch_reading_ease,
+                'ja': langcheck.metrics.ja.tateishi_ono_yamada_reading_ease
+            }, [request], True, False))
     metrics_to_compute.append(
-        Metric('response_readability', langcheck.metrics.flesch_reading_ease,
-               langcheck.metrics.ja.tateishi_ono_yamada_reading_ease,
-               [response], True, False))
+        Metric(
+            'response_readability', {
+                'en': langcheck.metrics.flesch_reading_ease,
+                'ja': langcheck.metrics.ja.tateishi_ono_yamada_reading_ease
+            }, [response], True, False))
     # TODO: Use japanese metrics once implemented
     metrics_to_compute.append(
-        Metric('ai_disclaimer_similarity',
-               langcheck.metrics.ai_disclaimer_similarity,
-               langcheck.metrics.ai_disclaimer_similarity, [response], True,
-               False))
+        Metric(
+            'ai_disclaimer_similarity', {
+                'en': langcheck.metrics.ai_disclaimer_similarity,
+                'ja': langcheck.metrics.ai_disclaimer_similarity
+            }, [response], True, False))
 
     # First, add the metric names to the database, but don't yet compute the
     # metrics
