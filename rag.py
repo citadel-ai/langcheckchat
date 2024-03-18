@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 
 from dotenv import load_dotenv
-from llama_index.core import (GPTVectorStoreIndex, ServiceContext,
-                              set_global_service_context)
+from llama_index.core import ServiceContext, set_global_service_context
+from llama_index.core.indices import GPTVectorStoreIndex
 from llama_index.core.readers import StringIterableReader
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
@@ -34,6 +34,10 @@ class RAG:
         # Generate response message
         if language == 'ja':
             user_message_sent = '日本語で答えてください\n' + user_message
+        elif language == 'de':
+            user_message_sent = 'Bitte antworte auf Deutsch\n' + user_message
+        elif language == 'zh':
+            user_message_sent = '请用中文回答\n' + user_message
         else:
             user_message_sent = user_message
         response = self.index.as_query_engine().query(user_message_sent)
