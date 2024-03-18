@@ -90,6 +90,8 @@ class Metric:
         return metric_result.metric_values[0], metric_result.explanations[0]
 
     def compute_metrics_and_update_db(self, language):
+        if language not in self.metric_fns:
+            return
         if self.local_metric_id is not None:
             value = self.compute_local_metric(language)
             db.update_metric_by_id(value, None, self.local_metric_id)
@@ -108,12 +110,16 @@ def get_factual_consistency(response, source,
             first_factual_consistency_metric = Metric(
                 'factual_consistency', {
                     'en': langcheck.metrics.factual_consistency,
-                    'ja': langcheck.metrics.ja.factual_consistency
+                    'ja': langcheck.metrics.ja.factual_consistency,
+                    'de': langcheck.metrics.de.factual_consistency,
+                    'zh': langcheck.metrics.zh.factual_consistency
                 }, [response, source[:len(source) // 2]], True, False)
             second_factual_consistency_metric = Metric(
                 'factual_consistency', {
                     'en': langcheck.metrics.factual_consistency,
-                    'ja': langcheck.metrics.ja.factual_consistency
+                    'ja': langcheck.metrics.ja.factual_consistency,
+                    'de': langcheck.metrics.de.factual_consistency,
+                    'zh': langcheck.metrics.zh.factual_consistency
                 }, [response, source[len(source) // 2:]], True, False)
             first_score = first_factual_consistency_metric.compute_local_metric(
                 language)
@@ -125,7 +131,9 @@ def get_factual_consistency(response, source,
         factual_consistency_metric = Metric(
             'factual_consistency', {
                 'en': langcheck.metrics.factual_consistency,
-                'ja': langcheck.metrics.ja.factual_consistency
+                'ja': langcheck.metrics.ja.factual_consistency,
+                'de': langcheck.metrics.de.factual_consistency,
+                'zh': langcheck.metrics.zh.factual_consistency
             }, [response, source], True, False)
         return factual_consistency_metric.compute_local_metric(language), None
 
@@ -133,7 +141,9 @@ def get_factual_consistency(response, source,
         factual_consistency_metric = Metric(
             'factual_consistency', {
                 'en': langcheck.metrics.factual_consistency,
-                'ja': langcheck.metrics.ja.factual_consistency
+                'ja': langcheck.metrics.ja.factual_consistency,
+                'de': langcheck.metrics.de.factual_consistency,
+                'zh': langcheck.metrics.zh.factual_consistency
             }, [response, source], False, True)
         return factual_consistency_metric.compute_openai_metric(language)
 
