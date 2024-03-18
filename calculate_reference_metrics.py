@@ -36,7 +36,7 @@ def main(log_id, reference):
     # First, add the metric names to the database, but don't yet compute the
     # metrics
     for metric in metrics_to_compute:
-        metric.insert_metric_names_to_db(log_id)
+        metric.insert_metric_names_to_db(log_id, language)
     db.update_chatlog_by_id({'status': 'pending'}, log_id)
 
     # Then, compute the metrics and update the database

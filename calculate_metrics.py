@@ -51,7 +51,9 @@ class Metric:
         self.local_metric_id = None
         self.openai_metric_id = None
 
-    def insert_metric_names_to_db(self, log_id):
+    def insert_metric_names_to_db(self, log_id, language):
+        if language not in self.metric_fns:
+            return
         if self.compute_local:
             self.local_metric_id = db.insert_metric(log_id, self.metric_name,
                                                     None, None)
@@ -164,76 +166,100 @@ def main(log_id):
             Metric(
                 'factual_consistency', {
                     'en': langcheck.metrics.factual_consistency,
-                    'ja': langcheck.metrics.ja.factual_consistency
+                    'ja': langcheck.metrics.ja.factual_consistency,
+                    'de': langcheck.metrics.de.factual_consistency,
+                    'zh': langcheck.metrics.zh.factual_consistency
                 }, [response, source], False, True))
     metrics_to_compute.append(
         Metric(
             'context_relevance', {
                 'en': langcheck.metrics.context_relevance,
-                'ja': langcheck.metrics.ja.context_relevance
+                'ja': langcheck.metrics.ja.context_relevance,
+                'de': langcheck.metrics.de.context_relevance
             }, [source, request], False, True))
     metrics_to_compute.append(
         Metric(
             'answer_relevance', {
                 'en': langcheck.metrics.answer_relevance,
-                'ja': langcheck.metrics.ja.answer_relevance
+                'ja': langcheck.metrics.ja.answer_relevance,
+                'de': langcheck.metrics.de.answer_relevance
             }, [response, request], False, True))
     metrics_to_compute.append(
-        Metric('request_toxicity', {
-            'en': langcheck.metrics.toxicity,
-            'ja': langcheck.metrics.ja.toxicity
-        }, [request], enable_local, True))
+        Metric(
+            'request_toxicity', {
+                'en': langcheck.metrics.toxicity,
+                'ja': langcheck.metrics.ja.toxicity,
+                'de': langcheck.metrics.de.toxicity,
+                'zh': langcheck.metrics.zh.toxicity
+            }, [request], enable_local, True))
     metrics_to_compute.append(
-        Metric('response_toxicity', {
-            'en': langcheck.metrics.toxicity,
-            'ja': langcheck.metrics.ja.toxicity
-        }, [response], enable_local, True))
+        Metric(
+            'response_toxicity', {
+                'en': langcheck.metrics.toxicity,
+                'ja': langcheck.metrics.ja.toxicity,
+                'de': langcheck.metrics.de.toxicity,
+                'zh': langcheck.metrics.zh.toxicity
+            }, [response], enable_local, True))
     metrics_to_compute.append(
         Metric(
             'request_sentiment', {
                 'en': langcheck.metrics.sentiment,
-                'ja': langcheck.metrics.ja.sentiment
+                'ja': langcheck.metrics.ja.sentiment,
+                'de': langcheck.metrics.de.sentiment,
+                'zh': langcheck.metrics.zh.sentiment
             }, [request], enable_local, True))
     metrics_to_compute.append(
         Metric(
             'response_sentiment', {
                 'en': langcheck.metrics.sentiment,
-                'ja': langcheck.metrics.ja.sentiment
+                'ja': langcheck.metrics.ja.sentiment,
+                'de': langcheck.metrics.de.sentiment,
+                'zh': langcheck.metrics.zh.sentiment
             }, [response], enable_local, True))
     metrics_to_compute.append(
-        Metric('request_fluency', {
-            'en': langcheck.metrics.fluency,
-            'ja': langcheck.metrics.ja.fluency
-        }, [request], enable_local, True))
+        Metric(
+            'request_fluency', {
+                'en': langcheck.metrics.fluency,
+                'ja': langcheck.metrics.ja.fluency,
+                'de': langcheck.metrics.de.fluency
+            }, [request], enable_local, True))
     metrics_to_compute.append(
-        Metric('response_fluency', {
-            'en': langcheck.metrics.fluency,
-            'ja': langcheck.metrics.ja.fluency
-        }, [response], enable_local, True))
+        Metric(
+            'response_fluency', {
+                'en': langcheck.metrics.fluency,
+                'ja': langcheck.metrics.ja.fluency,
+                'de': langcheck.metrics.de.fluency
+            }, [response], enable_local, True))
     metrics_to_compute.append(
         Metric(
             'request_readability', {
                 'en': langcheck.metrics.flesch_reading_ease,
-                'ja': langcheck.metrics.ja.tateishi_ono_yamada_reading_ease
+                'ja': langcheck.metrics.ja.tateishi_ono_yamada_reading_ease,
+                'de': langcheck.metrics.de.flesch_reading_ease,
+                'zh': langcheck.metrics.zh.xuyaochen_report_readability
             }, [request], True, False))
     metrics_to_compute.append(
         Metric(
             'response_readability', {
                 'en': langcheck.metrics.flesch_reading_ease,
-                'ja': langcheck.metrics.ja.tateishi_ono_yamada_reading_ease
+                'ja': langcheck.metrics.ja.tateishi_ono_yamada_reading_ease,
+                'de': langcheck.metrics.de.flesch_reading_ease,
+                'zh': langcheck.metrics.zh.xuyaochen_report_readability
             }, [response], True, False))
-    # TODO: Use japanese metrics once implemented
+    # TODO: Use japanese and chinese metrics once implemented
     metrics_to_compute.append(
         Metric(
             'ai_disclaimer_similarity', {
                 'en': langcheck.metrics.ai_disclaimer_similarity,
-                'ja': langcheck.metrics.ai_disclaimer_similarity
+                'ja': langcheck.metrics.ai_disclaimer_similarity,
+                'de': langcheck.metrics.de.ai_disclaimer_similarity,
+                'zh': langcheck.metrics.ai_disclaimer_similarity
             }, [response], True, False))
 
     # First, add the metric names to the database, but don't yet compute the
     # metrics
     for metric in metrics_to_compute:
-        metric.insert_metric_names_to_db(log_id)
+        metric.insert_metric_names_to_db(log_id, language)
     db.update_chatlog_by_id({'status': 'pending'}, log_id)
 
     # Then, compute the metrics and update the database
