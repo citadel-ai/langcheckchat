@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 
 from dotenv import load_dotenv
-from llama_index.core import (GPTVectorStoreIndex, ServiceContext,
-                              set_global_service_context)
+from llama_index.core import ServiceContext, set_global_service_context
+from llama_index.core.indices import GPTVectorStoreIndex
 from llama_index.core.readers import StringIterableReader
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
