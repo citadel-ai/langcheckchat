@@ -1,6 +1,8 @@
 import os
 import subprocess
+from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 
 import langcheck
 import pytz
@@ -76,6 +78,38 @@ def logs():
     per_page = 10
     offset = (page - 1) * per_page
     return jsonify(logs=db.get_chatlogs_and_metrics(per_page, offset))
+
+
+@api_routes_blueprint.route('/api/logs_comparison', methods=['GET'])
+def logs_comparison():
+    page = int(request.args.get('page', 1))
+    database_a_name = request.args.get('database_a')
+    database_b_name = request.args.get('database_b')
+    assert database_a_name is not None
+    assert database_b_name is not None
+    database_a_path = Path('db/' + database_a_name)
+    database_b_path = Path('db/' + database_b_name)
+
+    errors = defaultdict(list)
+    if not database_a_path.exists():
+        errors['database-a'].append(
+            f'{database_a_name} does not exist in the db/ directory')
+    elif not database_a_path.is_file():
+        errors['database-a'].append(f'{database_a_name} is not a file')
+    if not database_b_path.exists():
+        errors['database-b'].append(
+            f'{database_b_name} does not exist in the db/ directory')
+    elif not database_b_path.is_file():
+        errors['database-b'].append(f'{database_b_name} is not a file')
+    if len(errors) > 0:
+        return {'success': False, 'errors': errors}
+
+    per_page = 10
+    offset = (page - 1) * per_page
+    return jsonify(success=True,
+                   logs=db.get_comparison_chatlogs_and_metrics(
+                       str(database_a_path), str(database_b_path), per_page,
+                       offset))
 
 
 @api_routes_blueprint.route('/api/metrics/<log_id>', methods=['GET'])
