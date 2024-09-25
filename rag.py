@@ -27,7 +27,8 @@ class RAG:
         response = self.llm.chat.completions.create(
             model=os.environ['AZURE_OPENAI_API_MODEL'],
             messages=messages,  # type: ignore
-            temperature=0.0
+            seed=123,
+            temperature=0.6
         )
 
         response_text = response.choices[0].message.content

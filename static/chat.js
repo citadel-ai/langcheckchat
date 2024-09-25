@@ -7,13 +7,6 @@ let chatEndpoint = '/api/chat'
 
 $('#send-button').click(sendMessage);
 
-// Trigger send-button click event when Enter key is pressed
-$('#user-input').keypress(function (event) {
-  if (event.which == 13) { // 13 is the Enter key's code
-    event.preventDefault(); // Prevents default action (like form submission)
-    sendMessage();
-  }
-});
 
 $('[data-toggle="tooltip"]').tooltip({'trigger': 'hover'});
 
